@@ -375,6 +375,12 @@ def main() -> int:
     p.add_argument("--context", default="", help="Prior conversation context.")
     p.add_argument("--revise", metavar="NAME", help="Revise an existing shadow bundle.")
     p.add_argument("--feedback", default="", help="Feedback for --revise.")
+    p.add_argument(
+        "--feedback-file",
+        metavar="PATH",
+        default="",
+        help="Read feedback from a file (use when feedback contains newlines or shell-hostile chars).",
+    )
     p.add_argument("--list", action="store_true", help="List shadow artifacts.")
     p.add_argument("--read", metavar="NAME", help="Print all files in a shadow bundle.")
     p.add_argument("--inspect", action="store_true", help="List installed templates, prompts, and evals.")
@@ -432,7 +438,13 @@ def main() -> int:
         return 0
 
     if args.revise:
-        feedback = args.feedback or input("Feedback / what to change?\n> ").strip()
+        if args.feedback and args.feedback_file:
+            p.error("--feedback and --feedback-file are mutually exclusive")
+        if args.feedback_file:
+            from pathlib import Path as _Path
+            feedback = _Path(args.feedback_file).read_text(encoding="utf-8").strip()
+        else:
+            feedback = args.feedback or input("Feedback / what to change?\n> ").strip()
         result = ops.revise_artifact(args.revise, feedback)
         print(f"\n[revised bundle at {result['shadow_dir']}]")
         _print_summary(result["files"], result["assumptions"])
