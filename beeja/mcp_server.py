@@ -160,9 +160,19 @@ TOOLS: dict[str, dict[str, Any]] = {
     "build_artifact": {
         "fn": tool_build_artifact,
         "description": (
-            "Run the beeja interview + draft. Returns 'pending_question' if more "
-            "input is needed (re-call with same session_id and the answer appended "
-            "to answers[])."
+            "Run the beeja interview + draft. The interview is INTERACTIVE and the "
+            "questions MUST be answered by the human user, not by you. "
+            "If the response status is 'pending_question': "
+            "(1) STOP. Do not call this tool again in the same turn. "
+            "(2) Show the `question` field to the user verbatim. "
+            "(3) Wait for the user's reply. "
+            "(4) Re-invoke with the same `session_id` and the user's answer "
+            "appended to `answers[]`. "
+            "Never infer or fabricate answers on the user's behalf — the whole "
+            "point of the interview is to elicit user-specific intent that is not "
+            "yet in the conversation. The only exception is if the user has "
+            "explicitly pre-answered all interview questions in their prompt; in "
+            "that case quote their answers back to them before sending."
         ),
         "inputSchema": {
             "type": "object",
