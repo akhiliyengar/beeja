@@ -24,16 +24,33 @@ section is the human-authoritative copy.
 
 - **Bias toward minimal artifacts.** Fewer files, fewer lines, fewer abstractions.
   Bulkiness must be earned by the spec, not assumed.
-- **Required floor:** `<name>.toml` + `skill/main.py`. Single-pair artifacts are
-  a valid, preferred outcome when the work fits.
+- **Required floor:** `<name>.toml` + `skill/main.py` + `skill/__init__.py`.
+  The `__init__.py` is mandatory — without it, the artifact's local `skill/`
+  collides with the installed `builder` package and any tests fail to collect.
+- **Test coverage is a first-class concern.** For every artifact, make a
+  deliberate decision about `tests/` and record it. Default to emitting
+  `tests/test_main.py` whenever `skill/main.py` contains non-trivial pure
+  logic (parsing, validation, transforms, sanitization, error branches).
+  Skip only for <30-line pure-glue `main.py` that `evals/cases.yaml` already
+  fully exercises. When skipping, justify in `<assumptions>`.
 - **Optional files** — emit only when the answer is yes:
   - `prompts/main.v1.md` — the artifact actually issues an LLM call.
   - `evals/cases.yaml` — phase ≠ `exploration`, or at least one runnable
     property-floor case exists. Placeholder-only files are worse than no file.
+  - `tests/test_main.py` — see test-coverage rule above (default yes).
+  - `skill/_manifest.py` + `skill/_manifest.json` — multiple `skill/` modules
+    OR downstream tooling needs a stable code-surface hash. Single-file
+    artifacts skip this. Manifest must ship populated, never empty.
   - `notes.md` — there are concrete graduation criteria or open questions.
     Empty checklists are noise.
   - sibling `signal_collector` artifact — `specification ∈ {learned, implicit}`
     and no existing collector watches this asset.
+- **Test scaffolding rules** (when `tests/` emitted): each test file starts
+  with a sys.path shim (`sys.path.insert(0, str(Path(__file__).resolve().parent.parent))`)
+  before `import skill.main`; cover happy path + schema rejections + every
+  error branch + sanitization edges; mock all network/HTTP/filesystem-external
+  calls; assert on `Path(result).name` (not full paths) when checking derived
+  filenames.
 - **Surface omissions.** When a file is skipped, mention it in `<assumptions>`
   so the user can request it during `--revise`.
 

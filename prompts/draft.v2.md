@@ -15,8 +15,29 @@ The TOML spec now carries a structured `[success]` block with three orthogonal a
 - **No placeholders survive in the final bundle.** No `TODO`, `{{var}}`, `<FILL: ...>`, `FIXME`, `XXX`.
 - **Eval cases must be runnable**, not abstract. If you can't write a runnable case, you don't understand the success criterion well enough — say so in `<assumptions>`.
 - **Default to small.** Shortest viable prompt, smallest budget, fewest dependencies.
-- **Minimal file set.** Emit only the files the artifact actually needs. The required floor is `<name>.toml` + `skill/main.py`. Everything else (`prompts/`, `evals/`, `notes.md`, sibling artifacts) is optional and must justify its presence — see "When to omit a file" below. A single-file-pair artifact is a valid, preferred outcome when the work fits.
+- **Minimal file set.** Emit only the files the artifact actually needs. The required floor is `<name>.toml` + `skill/main.py` + `skill/__init__.py`. Everything else (`prompts/`, `evals/`, `tests/`, `skill/_manifest.py`, `notes.md`, sibling artifacts) is optional and must justify its presence — see "When to omit a file" below. A minimal artifact is a valid, preferred outcome when the work fits.
+- **Test coverage is a first-class concern.** For every artifact, make a deliberate decision about unit-test coverage of `skill/main.py` and record it. Default to emitting `tests/` whenever `skill/main.py` contains any non-trivial pure logic (parsing, validation, transformation, schema enforcement, ID sanitization, retry/error paths). Only skip when `main.py` is a thin <30-line glue layer that is fully exercised by `evals/cases.yaml`. When skipping, justify in `<assumptions>` (e.g. "omitted tests/: main.py is 18 lines of pure orchestration; eval cases cover the only branch").
 - **Surface every assumption.** Anything inferred-but-unstated goes in `<assumptions>`.
+
+### Test scaffolding rules (when `tests/` is emitted)
+
+- Always create `skill/__init__.py` (can be a single-line docstring). Without it, the artifact's local `skill/` collides with the builder's installed `skill` package and tests fail to collect with `ModuleNotFoundError`.
+- Each test file starts with a sys.path shim so `pytest` from the artifact root resolves the local package:
+  ```python
+  import sys
+  from pathlib import Path
+  sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+  import skill.main as M
+  ```
+- Cover at minimum: happy path, schema/validation rejections, every documented error branch, and any ID/path sanitization (e.g. slash-in-arxiv-id → underscore). Mock all network/HTTP/filesystem-external calls.
+- When asserting on derived paths, assert on the **filename portion** (`Path(result).name`) rather than the full path — directory separators in the prefix are not the value under test.
+- If the artifact emits a `skill/_manifest.py` (see below), include `tests/test_manifest.py` that regenerates the manifest in-memory and asserts equality with the on-disk `skill/_manifest.json`. This makes stale manifests fail CI.
+
+### Manifest scaffolding rules (when `skill/_manifest.py` is emitted)
+
+- Mirror this repo's pattern: `_manifest.py` exports a `MANIFEST_JSON` constant and a `generate_manifest()` function, runnable as `python -m skill._manifest --write` to regenerate `skill/_manifest.json`.
+- After emitting both files, the bundle MUST ship a populated `skill/_manifest.json` (not an empty file). If you cannot run the generator inside the bundle write, document the regen command in `notes.md` and surface it in `<assumptions>`.
+- Emit a manifest only when the artifact has multiple Python modules under `skill/` or when downstream tooling (meta-improver, signal collectors) needs a stable hash of the bundle's code surface. Single-file `skill/main.py` artifacts do not need a manifest.
 
 ## Filling the `[success]` block (the v2 heart)
 
@@ -95,8 +116,11 @@ Files are not free — each one is something the user must read, maintain, and k
 |---|---|
 | `<name>.toml` | always |
 | `skill/main.py` | always |
+| `skill/__init__.py` | always (required for `skill/` to be an importable package separate from the installed `builder` package) |
 | `prompts/main.v1.md` | the artifact actually issues an LLM call. Pure transforms, sensors over structured data, and deterministic scorers don't need a prompt file — inline the (short) instruction string in `main.py` or skip entirely. |
 | `evals/cases.yaml` | `phase != "exploration"` **OR** at least one property in `[success.properties]` is `true` and benefits from a runnable case. If you'd be writing only a placeholder, omit the file and note the gap in `<assumptions>` instead. |
+| `tests/test_main.py` | **default yes** — emit whenever `skill/main.py` contains non-trivial pure logic (parsing, validation, transforms, sanitization, error branches). Skip only for <30-line pure-glue `main.py` that is fully exercised by `evals/cases.yaml`. See "Test scaffolding rules" above. |
+| `skill/_manifest.py` + `skill/_manifest.json` | the artifact has multiple modules under `skill/`, OR downstream tooling needs a stable hash of the bundle's code. Single-file `main.py` artifacts skip this. See "Manifest scaffolding rules" above. |
 | `notes.md` | `phase ∈ {exploration, calibration}` **AND** there are concrete graduation criteria or open questions to record. An empty checklist is worse than no file. |
 | sibling `signal_collector` artifact | `specification ∈ {learned, implicit}` **AND** no existing collector watches this asset. |
 
@@ -176,6 +200,34 @@ Emit only the files the artifact actually needs (see "When to omit a file" above
 
 <file path="artifacts/<name>/skill/main.py">
 ... ~50 lines of orchestration. Load prompt (or inline string), parse input, call LLM (if needed), validate output (including property checks), write asset, log. No heavy frameworks in v1 of a new artifact.
+</file>
+
+<file path="artifacts/<name>/skill/__init__.py">
+"""<name> artifact package."""
+</file>
+
+<!-- emit by default; skip only if main.py is <30 lines of pure glue: -->
+<file path="artifacts/<name>/tests/test_main.py">
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import skill.main as M
+
+# happy path, schema rejections, error branches, sanitization edges.
+# mock all network / filesystem-external calls.
+</file>
+
+<!-- emit only if the artifact has multiple skill/ modules or needs a code-surface hash: -->
+<file path="artifacts/<name>/skill/_manifest.py">
+... generate_manifest() + MANIFEST_JSON; runnable as `python -m skill._manifest --write` ...
+</file>
+
+<file path="artifacts/<name>/skill/_manifest.json">
+... populated by running the generator; never ship empty ...
+</file>
+
+<file path="artifacts/<name>/tests/test_manifest.py">
+... assert on-disk _manifest.json matches a fresh in-memory regen ...
 </file>
 
 <!-- include only if the artifact issues an LLM call: -->
