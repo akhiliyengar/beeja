@@ -17,6 +17,7 @@ import * as http from 'node:http';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { spawn } from 'node:child_process';
 
 const VERSION    = '0.1.0';
 const PORT_FILE  = path.join(os.homedir(), '.builder', 'bridge.port');
@@ -49,7 +50,46 @@ export function activate(context: vscode.ExtensionContext): void {
 
 
 export function deactivate(): void {
+  runSignalCollector();
   stopServer();
+}
+
+
+/**
+ * Best-effort: invoke the builder signal_collector when the bridge shuts down.
+ * Acts as a backstop for chat.hooks.postSession (which only fires on chat
+ * session end, not on full VS Code shutdown).
+ *
+ * Looks for the collector relative to the active workspace folder. Silent on
+ * failure — collector is allowed to be absent (unbuilt shadow/) or to error.
+ */
+function runSignalCollector(): void {
+  try {
+    const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!folder) return;
+
+    const collector = path.join(
+      folder,
+      'shadow', 'signal_collector', 'artifacts', 'signal_collector', 'skill', 'main.py',
+    );
+    if (!fs.existsSync(collector)) return;
+
+    const py = process.platform === 'win32'
+      ? path.join(folder, '.venv', 'Scripts', 'python.exe')
+      : path.join(folder, '.venv', 'bin', 'python');
+    const pyCmd = fs.existsSync(py) ? py : 'python';
+
+    const env = {
+      ...process.env,
+      AGENTS_SHADOW_ROOT: process.env.AGENTS_SHADOW_ROOT || path.join(folder, 'shadow'),
+    };
+
+    // Detached + unref'd: don't block VS Code shutdown waiting for the collector.
+    const child = spawn(pyCmd, [collector], { detached: true, stdio: 'ignore', env });
+    child.unref();
+  } catch {
+    // Best-effort — swallow.
+  }
 }
 
 

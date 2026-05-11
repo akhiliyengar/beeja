@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# builder post-commit hook: best-effort invocation of the signal_collector after
+# every commit. Captures the just-committed change as a builder signal so the
+# meta-improver loop can react.
+#
+# Non-blocking: post-commit failures cannot abort a commit anyway, but we also
+# swallow errors here so a missing collector or unbuilt shadow/ doesn't spam.
+#
+# Skip with: SKIP_BUILDER_POST_COMMIT=1 git commit ...
+
+set -u
+
+if [ "${SKIP_BUILDER_POST_COMMIT:-0}" = "1" ]; then
+    exit 0
+fi
+
+# Locate venv python (same logic as pre-commit).
+if   [ -x ".venv/Scripts/python.exe" ]; then PY=".venv/Scripts/python.exe"
+elif [ -x ".venv/bin/python"        ]; then PY=".venv/bin/python"
+else                                         PY="python"
+fi
+
+COLLECTOR="shadow/signal_collector/artifacts/signal_collector/skill/main.py"
+
+if [ ! -f "$COLLECTOR" ]; then
+    # Collector hasn't been built in this checkout; nothing to do.
+    exit 0
+fi
+
+# Default shadow root if the user hasn't exported one.
+export AGENTS_SHADOW_ROOT="${AGENTS_SHADOW_ROOT:-$PWD/shadow}"
+
+echo "[builder] post-commit: running signal_collector against $AGENTS_SHADOW_ROOT" >&2
+"$PY" "$COLLECTOR" >/dev/null 2>&1 || {
+    echo "[builder] post-commit: signal_collector failed (non-fatal); run manually to debug" >&2
+}
+
+exit 0

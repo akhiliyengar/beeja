@@ -54,6 +54,26 @@ section is the human-authoritative copy.
 - `BUILDER_VSCODE_BRIDGE_URL` — VS Code bridge endpoint (else read from
   `~/.builder/bridge.port`).
 
+## Hooks
+
+Three places fire the `signal_collector` so the meta-improver loop has fresh
+data without manual prompting:
+
+1. **Pre-commit** (`.githooks/pre-commit`) — gatekeeper: manifest regen, ruff,
+   dead-code, pytest. Blocks the commit on failure.
+2. **Post-commit** (`.githooks/post-commit`) — best-effort: invokes the
+   collector against `$AGENTS_SHADOW_ROOT` (defaults to `./shadow`). Silent if
+   the collector hasn't been built. Skip with `SKIP_BUILDER_POST_COMMIT=1`.
+3. **VS Code chat session end** (`.vscode/settings.json` →
+   `chat.hooks.postSession` → `integrations/vscode_config/post-session-hook.ps1`)
+   — appends a JSONL invocation record to `$AGENTS_SHADOW_ROOT/_signals/builder.jsonl`,
+   which the collector lifts into deduped signals on its next run.
+4. **VS Code shutdown** (`vscode-extension/src/extension.ts` → `deactivate()`)
+   — backstop: spawns the collector detached so it runs even when the chat-hook
+   path didn't fire (e.g. full editor close).
+
+Enable the git hooks once per checkout: `git config core.hooksPath .githooks`.
+
 ## Commit / push conventions
 
 - Pre-commit hook runs: manifest regen → ruff → dead-code scan → pytest.
