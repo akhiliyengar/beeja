@@ -1,10 +1,10 @@
-"""Tests for beeja.builder — pure-logic functions and filesystem operations."""
+"""Tests for skill.builder — pure-logic functions and filesystem operations."""
 
 from __future__ import annotations
 
 import pytest
 
-from beeja.builder import (
+from skill.builder import (
     InterviewState,
     absorb_handoff,
     derive_name,
@@ -178,20 +178,20 @@ class TestBundleIO:
 
 class TestLoadPrompt:
     def test_v2_fallback_to_v1(self, tmp_path, monkeypatch):
-        import beeja.builder as b
+        import skill.builder as b
         monkeypatch.setattr(b, "PROMPTS_DIR", tmp_path)
         (tmp_path / "test.v1.md").write_text("v1 content", encoding="utf-8")
         assert load_prompt("test", "v2") == "v1 content"
 
     def test_v2_preferred(self, tmp_path, monkeypatch):
-        import beeja.builder as b
+        import skill.builder as b
         monkeypatch.setattr(b, "PROMPTS_DIR", tmp_path)
         (tmp_path / "test.v1.md").write_text("v1", encoding="utf-8")
         (tmp_path / "test.v2.md").write_text("v2", encoding="utf-8")
         assert load_prompt("test", "v2") == "v2"
 
     def test_exact_version(self, tmp_path, monkeypatch):
-        import beeja.builder as b
+        import skill.builder as b
         monkeypatch.setattr(b, "PROMPTS_DIR", tmp_path)
         (tmp_path / "test.v1.md").write_text("v1", encoding="utf-8")
         assert load_prompt("test", "v1") == "v1"

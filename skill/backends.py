@@ -1,11 +1,11 @@
 """LLM backend abstraction.
 
-Selects a backend at import time based on BEEJA_LLM_BACKEND:
+Selects a backend at import time based on BUILDER_LLM_BACKEND:
   - "anthropic" (default): direct Anthropic API. Requires ANTHROPIC_API_KEY.
   - "vscode":              bridges to GitHub Copilot via a local VS Code extension.
-                            Requires the beeja-bridge VS Code extension running.
-                            Reads bridge URL from BEEJA_VSCODE_BRIDGE_URL (default
-                            http://127.0.0.1:21847) or from ~/.beeja/bridge.port.
+                            Requires the builder-bridge VS Code extension running.
+                            Reads bridge URL from BUILDER_VSCODE_BRIDGE_URL (default
+                            http://127.0.0.1:21847) or from ~/.builder/bridge.port.
 
 The backend interface is just `call(system, messages, max_tokens) -> str`.
 """
@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_BRIDGE_URL = "http://127.0.0.1:21847"
-BRIDGE_PORT_FILE   = Path.home() / ".beeja" / "bridge.port"
+BRIDGE_PORT_FILE   = Path.home() / ".builder" / "bridge.port"
 
 
 class LLMBackend(ABC):
@@ -48,7 +48,7 @@ class AnthropicBackend(LLMBackend):
         if not os.environ.get("ANTHROPIC_API_KEY"):
             raise RuntimeError(
                 "ANTHROPIC_API_KEY not set. Either set it, or switch backends with "
-                "BEEJA_LLM_BACKEND=vscode."
+                "BUILDER_LLM_BACKEND=vscode."
             )
         self._client = anthropic.Anthropic()
         self._model = model
@@ -81,8 +81,8 @@ class VSCodeBridgeBackend(LLMBackend):
 
     The extension binds to 127.0.0.1 on a configurable port. Bridge URL is found
     via (in order):
-      1. BEEJA_VSCODE_BRIDGE_URL env var.
-      2. ~/.beeja/bridge.port file (just the port number, written by the extension).
+      1. BUILDER_VSCODE_BRIDGE_URL env var.
+      2. ~/.builder/bridge.port file (just the port number, written by the extension).
       3. The default http://127.0.0.1:21847.
     """
 
@@ -112,8 +112,8 @@ class VSCodeBridgeBackend(LLMBackend):
                 data = json.loads(resp.read().decode())
         except urllib.error.URLError as e:
             raise RuntimeError(
-                f"Could not reach beeja-bridge at {self._url}. Is VS Code running with "
-                f"the beeja-bridge extension installed? Underlying error: {e}"
+                f"Could not reach builder-bridge at {self._url}. Is VS Code running with "
+                f"the builder-bridge extension installed? Underlying error: {e}"
             ) from e
         if "error" in data:
             raise RuntimeError(f"bridge error: {data['error']}")
@@ -121,7 +121,7 @@ class VSCodeBridgeBackend(LLMBackend):
 
 
 def _discover_bridge_url() -> str:
-    if env := os.environ.get("BEEJA_VSCODE_BRIDGE_URL"):
+    if env := os.environ.get("BUILDER_VSCODE_BRIDGE_URL"):
         return env.rstrip("/")
     if BRIDGE_PORT_FILE.exists():
         port = BRIDGE_PORT_FILE.read_text().strip()
@@ -134,14 +134,14 @@ def _discover_bridge_url() -> str:
 
 def get_backend() -> LLMBackend:
     """Construct the configured backend. Cached per-process via module-level state."""
-    name = os.environ.get("BEEJA_LLM_BACKEND", "anthropic").lower()
-    model = os.environ.get("BEEJA_MODEL")  # backend-specific default if unset
+    name = os.environ.get("BUILDER_LLM_BACKEND", "anthropic").lower()
+    model = os.environ.get("BUILDER_MODEL")  # backend-specific default if unset
 
     if name == "anthropic":
         return AnthropicBackend(model=model or "claude-sonnet-4-6")
     if name in ("vscode", "vscode_bridge", "copilot"):
         return VSCodeBridgeBackend(model=model or "claude-sonnet-4.6")
     raise ValueError(
-        f"Unknown BEEJA_LLM_BACKEND={name!r}. "
+        f"Unknown BUILDER_LLM_BACKEND={name!r}. "
         f"Valid values: anthropic, vscode."
     )

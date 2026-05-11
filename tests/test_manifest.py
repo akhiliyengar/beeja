@@ -4,33 +4,33 @@ from __future__ import annotations
 
 import json
 
-from beeja._manifest import MANIFEST_PATH, generate_manifest, load_manifest
+from skill._manifest import MANIFEST_PATH, generate_manifest, load_manifest
 
 
 def test_manifest_file_exists():
     assert MANIFEST_PATH.exists(), (
-        "beeja/_manifest.json missing. Regenerate with: python -m beeja._manifest --write"
+        "builder/_manifest.json missing. Regenerate with: python -m skill._manifest --write"
     )
 
 
 def test_manifest_in_sync_with_source():
-    """If this fails, run: python -m beeja._manifest --write"""
+    """If this fails, run: python -m skill._manifest --write"""
     on_disk = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     fresh = generate_manifest()
     assert on_disk == fresh, (
-        "Manifest is stale. Regenerate with: python -m beeja._manifest --write"
+        "Manifest is stale. Regenerate with: python -m skill._manifest --write"
     )
 
 
 def test_manifest_has_expected_modules():
     data = generate_manifest()
     names = [m["module"] for m in data["modules"]]
-    assert names == ["beeja.ops", "beeja.builder", "beeja.backends", "beeja.mcp_server"]
+    assert names == ["skill.ops", "skill.builder", "skill.backends", "skill.mcp_server"]
 
 
 def test_manifest_ops_lists_canonical_functions():
     data = generate_manifest()
-    ops_entry = next(m for m in data["modules"] if m["module"] == "beeja.ops")
+    ops_entry = next(m for m in data["modules"] if m["module"] == "skill.ops")
     fn_names = {f["name"] for f in ops_entry["functions"]}
     assert {"list_artifacts", "read_artifact", "inspect_registry",
             "revise_artifact", "build_artifact"} <= fn_names
@@ -55,7 +55,7 @@ def test_load_manifest_returns_dict():
 
 def test_anthropic_backend_uses_prompt_caching(monkeypatch):
     """AnthropicBackend.call must wrap the system prompt with cache_control."""
-    import beeja.backends as backends
+    import skill.backends as backends
 
     captured: dict = {}
 
@@ -93,7 +93,7 @@ def test_anthropic_backend_uses_prompt_caching(monkeypatch):
 
 def test_anthropic_backend_handles_empty_system():
     """An empty system prompt must not be wrapped (avoid sending bogus cache block)."""
-    import beeja.backends as backends
+    import skill.backends as backends
 
     captured: dict = {}
 
@@ -122,7 +122,7 @@ def test_anthropic_backend_handles_empty_system():
 
 
 def test_mcp_exposes_code_manifest_tool():
-    from beeja.mcp_server import TOOLS
+    from skill.mcp_server import TOOLS
     assert "code_manifest" in TOOLS
     result = TOOLS["code_manifest"]["fn"]()
     assert "modules" in result

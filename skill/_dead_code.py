@@ -1,7 +1,7 @@
 """Find public symbols in the manifest that are never referenced outside their module.
 
 Usage:
-    python -m beeja._dead_code
+    python -m skill._dead_code
 
 This is the cheap LSP-substitute for "find dead code". It walks the manifest,
 greps the rest of the codebase for each name, and reports symbols with zero
@@ -14,10 +14,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from beeja._manifest import generate_manifest
+from skill._manifest import generate_manifest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCAN_DIRS = ["beeja", "tests"]
+SCAN_DIRS = ["skill", "tests"]
 # Symbols intentionally exported for external consumers; never report these.
 PUBLIC_API_ALLOWLIST = {
     "main",            # console-script entry point

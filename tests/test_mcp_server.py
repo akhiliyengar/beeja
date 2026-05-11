@@ -1,12 +1,12 @@
-"""Tests for beeja.mcp_server — protocol and read-only tools."""
+"""Tests for skill.mcp_server — protocol and read-only tools."""
 
 from __future__ import annotations
 
 import time
 
-import beeja.builder as builder_mod
-from beeja import mcp_server as mcp
-from beeja.mcp_server import (
+import skill.builder as builder_mod
+from skill import mcp_server as mcp
+from skill.mcp_server import (
     _SESSIONS,
     _evict_stale,
     _handle,
@@ -22,7 +22,7 @@ from beeja.mcp_server import (
 class TestMCPProtocol:
     def test_initialize(self):
         resp = _handle({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
-        assert resp["result"]["serverInfo"]["name"] == "beeja"
+        assert resp["result"]["serverInfo"]["name"] == "builder"
         assert resp["result"]["protocolVersion"] == "2024-11-05"
 
     def test_tools_list(self):

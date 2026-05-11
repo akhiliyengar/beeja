@@ -2,9 +2,9 @@
   "version": "0.1.0",
   "modules": [
     {
-      "module": "beeja.ops",
-      "file": "beeja/ops.py",
-      "doc": "beeja.ops \u2014 canonical operations.",
+      "module": "skill.ops",
+      "file": "skill/ops.py",
+      "doc": "skill.ops \u2014 canonical operations.",
       "functions": [
         {
           "name": "list_artifacts",
@@ -41,118 +41,118 @@
       "constants": []
     },
     {
-      "module": "beeja.builder",
-      "file": "beeja/builder.py",
-      "doc": "beeja \u2014 interview-driven artifact builder.",
+      "module": "skill.builder",
+      "file": "skill/builder.py",
+      "doc": "builder \u2014 interview-driven artifact builder.",
       "functions": [
         {
           "name": "shadow_root",
           "signature": "() -> 'Path'",
           "doc": "Return the shadow root, reading the env var each time.",
-          "line": 39
+          "line": 44
         },
         {
           "name": "load_prompt",
           "signature": "(name: 'str', version: 'str' = 'v2') -> 'str'",
           "doc": "Load a prompt file. Falls back to v1 if requested version doesn't exist.",
-          "line": 90
+          "line": 95
         },
         {
           "name": "load_template",
           "signature": "(kind: 'str') -> 'str'",
           "doc": "",
-          "line": 98
+          "line": 103
         },
         {
           "name": "load_properties_reference",
           "signature": "() -> 'str'",
           "doc": "",
-          "line": 102
+          "line": 107
         },
         {
           "name": "llm_call",
           "signature": "(system: 'str', messages: 'list[dict]', max_tokens: 'int' = 4096, backend: 'LLMBackend | None' = None) -> 'str'",
           "doc": "",
-          "line": 108
+          "line": 113
         },
         {
           "name": "run_interview",
           "signature": "(system: 'str', state: 'InterviewState', get_answer: 'Callable[[str], str]', backend: 'LLMBackend | None' = None) -> 'InterviewState'",
           "doc": "Core interview loop. *get_answer(question)* must return the user's answer",
-          "line": 122
+          "line": 127
         },
         {
           "name": "interview",
           "signature": "(intent: 'str', context: 'str' = '', interactive: 'bool' = True, backend: 'LLMBackend | None' = None) -> 'InterviewState'",
           "doc": "Run the 3-question interview via stdin/stdout.",
-          "line": 155
+          "line": 160
         },
         {
           "name": "absorb_handoff",
           "signature": "(state: 'InterviewState', handoff: 'dict[str, Any]') -> 'None'",
           "doc": "",
-          "line": 176
+          "line": 181
         },
         {
           "name": "draft",
           "signature": "(state: 'InterviewState', backend: 'LLMBackend | None' = None) -> 'tuple[dict[str, str], list[str]]'",
           "doc": "Produce the artifact bundle. Returns ({path: content}, assumptions).",
-          "line": 201
+          "line": 206
         },
         {
           "name": "revise",
           "signature": "(current: 'dict[str, str]', user_feedback: 'str', backend: 'LLMBackend | None' = None) -> 'tuple[dict[str, str], list[str]]'",
           "doc": "",
-          "line": 235
+          "line": 240
         },
         {
           "name": "extract_json",
           "signature": "(text: 'str') -> 'dict[str, Any] | None'",
           "doc": "",
-          "line": 256
+          "line": 261
         },
         {
           "name": "parse_bundle",
           "signature": "(text: 'str') -> 'tuple[dict[str, str], list[str]]'",
           "doc": "",
-          "line": 266
+          "line": 271
         },
         {
           "name": "bundle_to_text",
           "signature": "(bundle: 'dict[str, str]') -> 'str'",
           "doc": "",
-          "line": 278
+          "line": 283
         },
         {
           "name": "write_bundle",
           "signature": "(bundle: 'dict[str, str]', shadow_name: 'str', root: 'Path | None' = None) -> 'Path'",
           "doc": "",
-          "line": 283
+          "line": 288
         },
         {
           "name": "read_bundle",
           "signature": "(shadow_name: 'str', root: 'Path | None' = None) -> 'dict[str, str]'",
           "doc": "",
-          "line": 298
+          "line": 303
         },
         {
           "name": "derive_name",
           "signature": "(asset: 'str') -> 'str'",
           "doc": "",
-          "line": 314
+          "line": 319
         },
         {
           "name": "main",
           "signature": "() -> 'int'",
           "doc": "",
-          "line": 326
+          "line": 331
         }
       ],
       "classes": [
         {
           "name": "SuccessSpec",
           "doc": "SuccessSpec(shape: 'Shape | None' = None, specification: 'Specification | None' = None, phase: 'Phase | None' = None, description: 'str' = '', context_match: 'bool' = False)",
-          "line": 65,
+          "line": 70,
           "methods": [
             {
               "name": "__init__",
@@ -164,7 +164,7 @@
         {
           "name": "InterviewState",
           "doc": "InterviewState(questions_asked: 'int' = 0, turns: 'list[dict]' = <factory>, template: 'TemplateKind | None' = None, subtype: 'Subtype' = None, trigger: 'str | None' = None, output_asset: 'str | None' = None, success: 'SuccessSpec' = <factory>, properties_hint: 'list[str]' = <factory>, assumptions: 'list[str]' = <factory>, ready: 'bool' = False)",
-          "line": 74,
+          "line": 79,
           "methods": [
             {
               "name": "__init__",
@@ -176,7 +176,7 @@
         {
           "name": "NeedAnswer",
           "doc": "Raised by the answer callback when no more answers are available.",
-          "line": 115,
+          "line": 120,
           "methods": [
             {
               "name": "__init__",
@@ -192,8 +192,8 @@
       ]
     },
     {
-      "module": "beeja.backends",
-      "file": "beeja/backends.py",
+      "module": "skill.backends",
+      "file": "skill/backends.py",
       "doc": "LLM backend abstraction.",
       "functions": [
         {
@@ -256,9 +256,9 @@
       ]
     },
     {
-      "module": "beeja.mcp_server",
-      "file": "beeja/mcp_server.py",
-      "doc": "beeja MCP server \u2014 stdio JSON-RPC 2.0 wrapper around beeja.ops.",
+      "module": "skill.mcp_server",
+      "file": "skill/mcp_server.py",
+      "doc": "builder MCP server \u2014 stdio JSON-RPC 2.0 wrapper around skill.ops.",
       "functions": [
         {
           "name": "tool_build_artifact",

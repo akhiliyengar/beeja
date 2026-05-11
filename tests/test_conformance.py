@@ -14,9 +14,9 @@ from unittest.mock import patch
 
 import pytest
 
-import beeja.builder as builder
-import beeja.mcp_server as mcp
-import beeja.ops as ops
+import skill.builder as builder
+import skill.mcp_server as mcp
+import skill.ops as ops
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -78,7 +78,7 @@ class TestListArtifacts:
         result = ops.list_artifacts()
         buf = StringIO()
         with patch("sys.stdout", buf):
-            with patch("sys.argv", ["beeja", "--list"]):
+            with patch("sys.argv", ["builder", "--list"]):
                 builder.main()
         output = buf.getvalue()
         for a in result["artifacts"]:
@@ -132,7 +132,7 @@ class TestInspectRegistry:
         result = ops.inspect_registry()
         buf = StringIO()
         with patch("sys.stdout", buf):
-            with patch("sys.argv", ["beeja", "--inspect"]):
+            with patch("sys.argv", ["builder", "--inspect"]):
                 builder.main()
         output = buf.getvalue()
         for t in result["templates"]:

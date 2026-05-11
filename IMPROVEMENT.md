@@ -1,4 +1,4 @@
-# beeja improvement loop
+# builder improvement loop
 
 How the builder improves itself. Deterministic, periodic, gated.
 
@@ -19,14 +19,14 @@ They don't, until you build them — using the builder, on itself.
 |---|---|---|
 | **builder signal collector** | `sensor[subtype=signal_collector]` | Watch every builder invocation. Append to `~/agents/shadow/_signals/builder.jsonl`. Emit `signals.builder.*`. |
 | **builder scorer** | `scorer[subtype=learned_scorer]` | Consume those signals. Fit a preference model. Emit `evals.scores.builder` as a 3-dim vector per session. |
-| **builder improver** | `meta` | Read the scores, propose prompt mutations, replay-and-gate. Targets `beeja/prompts/{interview,draft,revise}.v*.md`. Has `[success.properties].monotonicity = true`. |
+| **builder improver** | `meta` | Read the scores, propose prompt mutations, replay-and-gate. Targets `prompts/{interview,draft,revise}.v*.md`. Has `[success.properties].monotonicity = true`. |
 
 Bootstrap them:
 
 ```bash
-beeja "signal collector for the builder; reads ~/agents/shadow/_signals/builder.jsonl"
-beeja "scorer for the builder; emits a 3-dim vector per session from the signal stream"
-beeja "meta-improver targeting beeja's interview/draft/revise prompts; monotonic Pareto promotions only"
+builder "signal collector for the builder; reads ~/agents/shadow/_signals/builder.jsonl"
+builder "scorer for the builder; emits a 3-dim vector per session from the signal stream"
+builder "meta-improver targeting builder's interview/draft/revise prompts; monotonic Pareto promotions only"
 ```
 
 ## Triggers (whichever fires first)
@@ -80,7 +80,7 @@ This is *the* property that distinguishes "self-improving" from "self-mutating".
 
 Until volume hits 50:
 
-- `beeja --improve --propose-only` — read whatever exists, propose candidates,
+- `builder --improve --propose-only` — read whatever exists, propose candidates,
   do not promote. Useful for sanity-checking the loop end-to-end.
 - **Reflection-only mode** — if N < 10, the improver skips the scorer and
   asks the LLM to critique sessions you marked as low-quality.
@@ -93,9 +93,9 @@ Until volume hits 50:
 ```
 Today:       Build the three peer artifacts (above).
              Install the post-session hook.
-             Run `beeja --improve --propose-only` to validate the pipeline.
+             Run `builder --improve --propose-only` to validate the pipeline.
 
-Week 1-3:    Use beeja normally for your other work.
+Week 1-3:    Use builder normally for your other work.
              Signals accumulate. Scorer fits its preference model.
 
 Week 4+:     First volume-triggered pass fires (50 records hit).

@@ -1,8 +1,8 @@
 /**
- * beeja-bridge — a thin localhost HTTP shim that lets the beeja Python CLI use
+ * builder-bridge — a thin localhost HTTP shim that lets the builder Python CLI use
  * GitHub Copilot models via vscode.lm.
  *
- * Binds 127.0.0.1 only. Writes its port to ~/.beeja/bridge.port so the CLI can
+ * Binds 127.0.0.1 only. Writes its port to ~/.builder/bridge.port so the CLI can
  * discover it. Triggers VS Code's vscode.lm consent dialog the first time a
  * model is requested.
  *
@@ -19,7 +19,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 const VERSION    = '0.1.0';
-const PORT_FILE  = path.join(os.homedir(), '.beeja', 'bridge.port');
+const PORT_FILE  = path.join(os.homedir(), '.builder', 'bridge.port');
 
 let server: http.Server | undefined;
 let statusBar: vscode.StatusBarItem | undefined;
@@ -27,17 +27,17 @@ let statusBar: vscode.StatusBarItem | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBar.command = 'beejaBridge.showStatus';
+  statusBar.command = 'builderBridge.showStatus';
   context.subscriptions.push(statusBar);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('beejaBridge.showStatus', showStatus),
-    vscode.commands.registerCommand('beejaBridge.restart', () => {
+    vscode.commands.registerCommand('builderBridge.showStatus', showStatus),
+    vscode.commands.registerCommand('builderBridge.restart', () => {
       stopServer();
       startServer();
     }),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('beejaBridge.port')) {
+      if (e.affectsConfiguration('builderBridge.port')) {
         stopServer();
         startServer();
       }
@@ -54,16 +54,16 @@ export function deactivate(): void {
 
 
 function startServer(): void {
-  const port = vscode.workspace.getConfiguration('beejaBridge').get<number>('port', 21847);
+  const port = vscode.workspace.getConfiguration('builderBridge').get<number>('port', 21847);
 
   server = http.createServer(handleRequest);
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
       vscode.window.showErrorMessage(
-        `beeja bridge: port ${port} already in use. Change beejaBridge.port in settings.`,
+        `builder bridge: port ${port} already in use. Change builderBridge.port in settings.`,
       );
     } else {
-      vscode.window.showErrorMessage(`beeja bridge error: ${err.message}`);
+      vscode.window.showErrorMessage(`builder bridge error: ${err.message}`);
     }
     setStatus('error', `:${port}`);
   });
@@ -87,16 +87,16 @@ function stopServer(): void {
 function setStatus(state: 'ok' | 'off' | 'error', detail: string): void {
   if (!statusBar) return;
   const icon = state === 'ok' ? '$(plug)' : state === 'error' ? '$(error)' : '$(circle-slash)';
-  statusBar.text = `${icon} beeja ${detail}`;
-  statusBar.tooltip = `beeja-bridge ${VERSION} — ${state}${detail}`;
+  statusBar.text = `${icon} builder ${detail}`;
+  statusBar.tooltip = `builder-bridge ${VERSION} — ${state}${detail}`;
   statusBar.show();
 }
 
 
 function showStatus(): void {
-  const port = vscode.workspace.getConfiguration('beejaBridge').get<number>('port', 21847);
+  const port = vscode.workspace.getConfiguration('builderBridge').get<number>('port', 21847);
   const url  = `http://127.0.0.1:${port}`;
-  vscode.window.showInformationMessage(`beeja bridge ${VERSION} listening at ${url}`);
+  vscode.window.showInformationMessage(`builder bridge ${VERSION} listening at ${url}`);
 }
 
 
@@ -105,7 +105,7 @@ function writePortFile(port: number): void {
     fs.mkdirSync(path.dirname(PORT_FILE), { recursive: true });
     fs.writeFileSync(PORT_FILE, String(port), { mode: 0o600 });
   } catch (e) {
-    console.warn('beeja bridge: could not write port file:', e);
+    console.warn('builder bridge: could not write port file:', e);
   }
 }
 
@@ -192,7 +192,7 @@ async function runChat(req: ChatRequest): Promise<string> {
   }
 
   const defaultFamily = vscode.workspace
-    .getConfiguration('beejaBridge')
+    .getConfiguration('builderBridge')
     .get<string>('defaultFamily', 'claude-sonnet-4.6');
   const family = req.model || defaultFamily;
 

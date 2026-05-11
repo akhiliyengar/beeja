@@ -1,10 +1,10 @@
-"""beeja MCP server — stdio JSON-RPC 2.0 wrapper around beeja.ops.
+"""builder MCP server — stdio JSON-RPC 2.0 wrapper around skill.ops.
 
-All business logic lives in beeja.ops. This module handles:
+All business logic lives in skill.ops. This module handles:
   1. Session management for multi-turn build_artifact calls.
   2. JSON-RPC wire protocol.
 
-Run with:  python -m beeja.mcp_server
+Run with:  python -m skill.mcp_server
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import time
 import uuid
 from typing import Any
 
-from beeja.builder import (
+from skill.builder import (
     MAX_QUESTIONS,
     InterviewState,
     NeedAnswer,
@@ -25,7 +25,7 @@ from beeja.builder import (
     run_interview,
     write_bundle,
 )
-from beeja.ops import (
+from skill.ops import (
     inspect_registry,
     list_artifacts,
     read_artifact,
@@ -150,7 +150,7 @@ def tool_inspect_registry() -> dict[str, Any]:
 
 def tool_code_manifest() -> dict[str, Any]:
     """Return the static manifest of public functions/classes in this package."""
-    from beeja._manifest import load_manifest
+    from skill._manifest import load_manifest
     return load_manifest()
 
 
@@ -160,7 +160,7 @@ TOOLS: dict[str, dict[str, Any]] = {
     "build_artifact": {
         "fn": tool_build_artifact,
         "description": (
-            "Run the beeja interview + draft. The interview is INTERACTIVE and the "
+            "Run the builder interview + draft. The interview is INTERACTIVE and the "
             "questions MUST be answered by the human user, not by you. "
             "If the response status is 'pending_question': "
             "(1) STOP. Do not call this tool again in the same turn. "
@@ -198,7 +198,7 @@ TOOLS: dict[str, dict[str, Any]] = {
     },
     "list_shadow_artifacts": {
         "fn": tool_list_shadow_artifacts,
-        "description": "List all shadow artifacts under BEEJA_SHADOW_ROOT.",
+        "description": "List all shadow artifacts under AGENTS_SHADOW_ROOT.",
         "inputSchema": {"type": "object", "properties": {}},
     },
     "read_shadow_artifact": {
@@ -212,13 +212,13 @@ TOOLS: dict[str, dict[str, Any]] = {
     },
     "inspect_registry": {
         "fn": tool_inspect_registry,
-        "description": "List installed templates, prompts, and evals shipped with beeja.",
+        "description": "List installed templates, prompts, and evals shipped with builder.",
         "inputSchema": {"type": "object", "properties": {}},
     },
     "code_manifest": {
         "fn": tool_code_manifest,
         "description": (
-            "Return a JSON manifest of public functions/classes across beeja's modules "
+            "Return a JSON manifest of public functions/classes across builder's modules "
             "(name, signature, docstring, file, line). Use to locate code for targeted "
             "edits without scanning the whole repo."
         ),
@@ -245,7 +245,7 @@ def _handle(req: dict) -> dict | None:
         return _resp(rid, {
             "protocolVersion": "2024-11-05",
             "capabilities": {"tools": {}},
-            "serverInfo": {"name": "beeja", "version": "0.1.0"},
+            "serverInfo": {"name": "builder", "version": "0.1.0"},
         })
 
     if method == "tools/list":

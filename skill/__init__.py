@@ -1,7 +1,7 @@
-"""beeja — interview-driven artifact builder for self-improving agent systems."""
+"""builder — interview-driven artifact builder for self-improving agent systems."""
 
-from beeja import ops
-from beeja.builder import (
+from skill import ops
+from skill.builder import (
     InterviewState,
     NeedAnswer,
     SuccessSpec,

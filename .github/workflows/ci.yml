@@ -26,15 +26,15 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint (ruff)
-        run: python -m ruff check beeja tests
+        run: python -m ruff check builder tests
 
       - name: Manifest is in sync
         run: |
-          python -m beeja._manifest --write
-          git diff --exit-code beeja/_manifest.json || (echo "FAIL: _manifest.json is stale. Run: python -m beeja._manifest --write"; exit 1)
+          python -m skill._manifest --write
+          git diff --exit-code builder/_manifest.json || (echo "FAIL: _manifest.json is stale. Run: python -m skill._manifest --write"; exit 1)
 
       - name: Dead-code scan
-        run: python -m beeja._dead_code
+        run: python -m skill._dead_code
 
       - name: Tests
         run: python -m pytest -q
@@ -64,8 +64,8 @@ jobs:
           import sys, types
           # Stub anthropic so we can import without an API key
           sys.modules['anthropic'] = types.SimpleNamespace(Anthropic=lambda *a, **kw: None)
-          from beeja import interview, draft, revise, SuccessSpec, InterviewState
-          from beeja.builder import load_prompt, load_template, load_properties_reference
+          from skill import interview, draft, revise, SuccessSpec, InterviewState
+          from skill.builder import load_prompt, load_template, load_properties_reference
           # The package data must be findable
           assert 'three-axis' in load_prompt('interview').lower() or 'three orthogonal' in load_prompt('interview').lower()
           assert 'phase-dependent scaffolding' in load_prompt('draft').lower()

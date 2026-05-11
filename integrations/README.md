@@ -1,4 +1,4 @@
-# beeja integrations
+# builder integrations
 
 Three ways to call the builder. Pick whichever fits your workflow — they all
 end up in the same Python module.
@@ -25,7 +25,7 @@ mkdir -p .vscode
 cp vscode_config/mcp.json .vscode/
 ```
 
-Reload the window. The `beeja` server appears under MCP and exposes:
+Reload the window. The `builder` server appears under MCP and exposes:
 
 | Tool | Purpose |
 |---|---|
@@ -50,23 +50,30 @@ Reload the window. The `beeja` server appears under MCP and exposes:
 ## C. Direct CLI
 
 ```bash
-beeja "rank arxiv papers"
-beeja --revise papers_ranked_feed --feedback "tighten JSON rules"
+builder "rank arxiv papers"
+builder --revise papers_ranked_feed --feedback "tighten JSON rules"
 ```
 
 Useful for cron jobs, CI, and shell pipelines.
 
 ## Signal hook (optional but recommended)
 
-`hooks/post-session-hook.sh` appends one JSONL record per builder invocation
-to `~/agents/shadow/_signals/builder.jsonl`. This is the data feed the
-self-improvement loop consumes.
+`vscode_config/post-session-hook.sh` (or `.ps1` on Windows) appends one JSONL
+record per builder invocation to `$AGENTS_SHADOW_ROOT/_signals/builder.jsonl`.
+This is the data feed the self-improvement loop consumes.
 
-Enable in VS Code settings:
+Enable in VS Code settings — bash (Linux / macOS / WSL):
 
 ```json
 "chat.hooks.enabled": true,
-"chat.hooks.postSession": "${workspaceFolder}/integrations/hooks/post-session-hook.sh"
+"chat.hooks.postSession": "${workspaceFolder}/integrations/vscode_config/post-session-hook.sh"
+```
+
+Windows / PowerShell:
+
+```json
+"chat.hooks.enabled": true,
+"chat.hooks.postSession": "powershell -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/integrations/vscode_config/post-session-hook.ps1"
 ```
 
 Without this, signals only accumulate when you remember to log feedback —
@@ -75,6 +82,6 @@ which is the wrong default.
 ## Pre-flight checklist
 
 - [ ] Python venv active, `pip install -e ..` from this dir
-- [ ] `beeja-bridge` VS Code extension installed and showing `$(plug) beeja :21847`
-- [ ] `BEEJA_LLM_BACKEND=vscode` (set automatically by the MCP config and SKILL)
+- [ ] `builder-bridge` VS Code extension installed and showing `$(plug) builder :21847`
+- [ ] `BUILDER_LLM_BACKEND=vscode` (set automatically by the MCP config and SKILL)
 - [ ] `~/agents/shadow/` writable

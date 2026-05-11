@@ -5,11 +5,11 @@ agents (and humans) can find the right function to read/edit without scanning
 every file. Cheaper than an LSP, sufficient for targeted updates.
 
 Run as a script to regenerate:
-    python -m beeja._manifest
+    python -m skill._manifest
 
 Or via the CLI:
-    beeja --manifest          # print to stdout
-    beeja --manifest --write  # rewrite beeja/_manifest.json
+    builder --manifest          # print to stdout
+    builder --manifest --write  # rewrite builder/_manifest.json
 """
 
 from __future__ import annotations
@@ -22,10 +22,10 @@ from typing import Any
 
 # Modules to index. Order is preserved in the output.
 MODULES = [
-    "beeja.ops",
-    "beeja.builder",
-    "beeja.backends",
-    "beeja.mcp_server",
+    "skill.ops",
+    "skill.builder",
+    "skill.backends",
+    "skill.mcp_server",
 ]
 
 PKG_DIR       = Path(__file__).resolve().parent
@@ -117,7 +117,7 @@ def _module_entry(module_name: str) -> dict[str, Any]:
 
 def generate_manifest() -> dict[str, Any]:
     """Build the manifest dict by introspecting MODULES."""
-    from beeja import __version__
+    from skill import __version__
     return {
         "version": __version__,
         "modules": [_module_entry(m) for m in MODULES],

@@ -1,12 +1,12 @@
 {
   "$schema": "https://aka.ms/vscode-mcp-schema",
   "servers": {
-    "beeja": {
+    "artifact-builder": {
       "type": "stdio",
       "command": "python",
-      "args": ["-m", "beeja.mcp_server"],
+      "args": ["-m", "skill.mcp_server"],
       "env": {
-        "BEEJA_LLM_BACKEND": "vscode"
+        "BUILDER_LLM_BACKEND": "vscode"
       }
     }
   }

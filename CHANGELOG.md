@@ -2,36 +2,36 @@
 
 ## v0.1.0 — 2026-05-11
 
-First tagged release. Renamed package from internal working name to `beeja`; relayouted so prompts, templates, and eval suites live inside the python package and ship with `pip install beeja`.
+First tagged release. Renamed project from internal working name `beeja` to `builder` (with the python package called `skill`); relayouted so prompts, templates, and eval suites live at the repo root and ship with `pip install builder` as package data.
 
 ### Added
 
-- `beeja` console script (`beeja "intent"` and `beeja --revise NAME`).
-- `python -m beeja "intent"` entry point.
-- `beeja --version`.
+- `builder` console script (`builder "intent"` and `builder --revise NAME`).
+- `python -m skill "intent"` entry point.
+- `builder --version`.
 - `LICENSE` (MIT).
 - Sdist + wheel build via hatchling.
-- **Pluggable LLM backends** via `BEEJA_LLM_BACKEND` env var:
+- **Pluggable LLM backends** via `BUILDER_LLM_BACKEND` env var:
   - `anthropic` (default) — direct Anthropic API, requires `ANTHROPIC_API_KEY`.
   - `vscode` — bridges to GitHub Copilot via a sibling VS Code extension
     (`vscode-extension/`). Uses the user's Copilot subscription. Requires the
     extension to be installed and VS Code running.
-- `beeja/backends.py` — backend abstraction (LLMBackend ABC, lazy construction,
+- `skill/backends.py` — backend abstraction (LLMBackend ABC, lazy construction,
   env-var dispatch).
 - `vscode-extension/` — sibling TypeScript extension that exposes `vscode.lm`
-  as `http://127.0.0.1:21847`. Writes its port to `~/.beeja/bridge.port` for
+  as `http://127.0.0.1:21847`. Writes its port to `~/.builder/bridge.port` for
   CLI discovery.
 
 ### Changed
 
-- Project name: was internal working name → `beeja`.
-- Python package: was `skill/` → `beeja/`.
-- Resource layout: `prompts/`, `templates/`, `evals/` moved from project root into the `beeja/` python package so installed wheels ship them as package data.
-- Imports: `from skill import ...` → `from beeja import ...`.
-- CLI: `python -m skill.builder ...` → `beeja ...`.
-- Path resolution in `builder.py`: `BUILDER_DIR = parent.parent` → `PKG_DIR = parent`. Resolves correctly whether invoked from source checkout or installed wheel.
-- Env vars: `AGENTS_SHADOW_ROOT` → `BEEJA_SHADOW_ROOT`; `BUILDER_MODEL` → `BEEJA_MODEL`.
-- `beeja.toml` (was `builder.toml`): updated prompt/template/eval paths to reflect new layout.
+- Project name: was `beeja` → `builder`.
+- Python package directory: was `beeja/` → `skill/`.
+- Resource layout: `prompts/`, `templates/`, `evals/` moved from inside the package up to the repo root; force-included in the wheel so `pip install builder` still ships them.
+- Imports: `from beeja import ...` → `from skill import ...`.
+- CLI: `python -m beeja.builder ...` → `builder ...`.
+- Path resolution in `skill/builder.py`: `PKG_DIR = parent` → `SKILL_DIR / REPO_ROOT`. Asset dirs resolve relative to `REPO_ROOT` so they work in both source checkout and installed wheel layouts.
+- Env vars: `BEEJA_SHADOW_ROOT` → `AGENTS_SHADOW_ROOT`; `BEEJA_MODEL` → `BUILDER_MODEL`; `BEEJA_LLM_BACKEND` → `BUILDER_LLM_BACKEND`; `BEEJA_VSCODE_BRIDGE_URL` → `BUILDER_VSCODE_BRIDGE_URL`.
+- Spec file: `beeja.toml` → `builder.toml`.
 
 ### Internal
 
@@ -52,7 +52,7 @@ Every artifact spec carries:
 - `success.specification` — `explicit | property | implicit | learned | hybrid`
 - `success.phase` — `exploration | calibration | optimization | maintenance`
 
-Plus shape-specific fields (target/range for scalar, classes for multi_class, dimensions/composition for vector, etc.) — see `beeja/prompts/draft.v2.md`.
+Plus shape-specific fields (target/range for scalar, classes for multi_class, dimensions/composition for vector, etc.) — see `prompts/draft.v2.md`.
 
 ### Added — universal property floor
 
@@ -67,7 +67,7 @@ A `[success.properties]` block with eight always-considered properties:
 7. rephrase_stability
 8. calibration
 
-Each artifact explicitly sets every property to `true | false | { ... config }`. Property semantics and defaults documented in `beeja/prompts/properties.v1.md`.
+Each artifact explicitly sets every property to `true | false | { ... config }`. Property semantics and defaults documented in `prompts/properties.v1.md`.
 
 Per-template forced defaults:
 - **applier**: `idempotence = true` (retry must be safe)

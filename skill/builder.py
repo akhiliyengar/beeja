@@ -1,13 +1,13 @@
-"""beeja — interview-driven artifact builder.
+"""builder — interview-driven artifact builder.
 
 Three phases: interview -> draft -> revise.
 
 CLI:
-    beeja "I want something that ranks new arxiv papers"
-    beeja --revise arxiv_ranked_today --feedback "tighten JSON rules"
+    builder "I want something that ranks new arxiv papers"
+    builder --revise arxiv_ranked_today --feedback "tighten JSON rules"
 
 Programmatic:
-    from beeja import interview, draft, revise, write_bundle
+    from skill import interview, draft, revise, write_bundle
 """
 
 from __future__ import annotations
@@ -22,14 +22,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from beeja.backends import LLMBackend, get_backend
+from skill.backends import LLMBackend, get_backend
 
 # --- config -----------------------------------------------------------------
 
-PKG_DIR         = Path(__file__).resolve().parent
-PROMPTS_DIR     = PKG_DIR / "prompts"
-TEMPLATES_DIR   = PKG_DIR / "templates"
-EVALS_DIR       = PKG_DIR / "evals"
+# Tarball layout: skill/ is the package; prompts/, templates/, evals/ live at
+# the *repo root* (one level up). When installed via the wheel, hatchling
+# force-includes those dirs alongside the package so the same parent-of-package
+# resolution still works.
+SKILL_DIR       = Path(__file__).resolve().parent
+REPO_ROOT       = SKILL_DIR.parent
+PROMPTS_DIR     = REPO_ROOT / "prompts"
+TEMPLATES_DIR   = REPO_ROOT / "templates"
+EVALS_DIR       = REPO_ROOT / "evals"
 MAX_QUESTIONS   = 3
 PROMPT_VERSION  = "v2"
 
@@ -38,7 +43,7 @@ _BACKEND: LLMBackend | None = None
 
 def shadow_root() -> Path:
     """Return the shadow root, reading the env var each time."""
-    return Path(os.environ.get("BEEJA_SHADOW_ROOT", str(Path.home() / "agents" / "shadow")))
+    return Path(os.environ.get("AGENTS_SHADOW_ROOT", str(Path.home() / "agents" / "shadow")))
 
 
 # Module-level snapshot for backward compat. Prefer shadow_root() for dynamic reads.
@@ -167,7 +172,7 @@ def interview(intent: str, context: str = "", interactive: bool = True,
                 "interactive=False but builder asked a question; "
                 "supply answers via the API instead."
             )
-        print(f"\n[beeja] {question}\n")
+        print(f"\n[builder] {question}\n")
         return input("> ").strip()
 
     return run_interview(system, state, _ask, backend=backend)
@@ -325,7 +330,7 @@ _derive_name = derive_name
 
 def main() -> int:
     p = argparse.ArgumentParser(
-        prog="beeja",
+        prog="builder",
         description="Interview-driven artifact builder for self-improving agent systems.",
     )
     p.add_argument("intent", nargs="?", help="What do you want to build?")
@@ -336,25 +341,25 @@ def main() -> int:
     p.add_argument("--read", metavar="NAME", help="Print all files in a shadow bundle.")
     p.add_argument("--inspect", action="store_true", help="List installed templates, prompts, and evals.")
     p.add_argument("--manifest", action="store_true", help="Print the code-navigation manifest as JSON.")
-    p.add_argument("--write-manifest", action="store_true", help="Regenerate beeja/_manifest.json on disk.")
+    p.add_argument("--write-manifest", action="store_true", help="Regenerate builder/_manifest.json on disk.")
     p.add_argument("--version", action="store_true", help="Print version and exit.")
     args = p.parse_args()
 
-    from beeja import ops
+    from skill import ops
 
     if args.version:
-        from beeja import __version__
-        print(f"beeja {__version__}")
+        from skill import __version__
+        print(f"builder {__version__}")
         return 0
 
     if args.write_manifest:
-        from beeja._manifest import write_manifest
+        from skill._manifest import write_manifest
         out = write_manifest()
         print(f"wrote {out}")
         return 0
 
     if args.manifest:
-        from beeja._manifest import load_manifest
+        from skill._manifest import load_manifest
         print(json.dumps(load_manifest(), indent=2))
         return 0
 
@@ -398,10 +403,10 @@ def main() -> int:
     if not args.intent:
         p.error("intent required (or use --revise NAME)")
 
-    print(f"\n=== beeja ===\nbackend: {_backend().name}\nintent: {args.intent}\n")
+    print(f"\n=== builder ===\nbackend: {_backend().name}\nintent: {args.intent}\n")
 
     def _ask(question: str) -> str:
-        print(f"\n[beeja] {question}\n")
+        print(f"\n[builder] {question}\n")
         return input("> ").strip()
 
     result = ops.build_artifact(args.intent, args.context, get_answer=_ask)
@@ -422,7 +427,7 @@ def main() -> int:
     print(f"\n[draft written to {result['shadow_dir']}]")
     _print_summary(result["files"], result["assumptions"])
     print("\nReview and edit the files, then run:")
-    print(f"  beeja --revise {result['name']}")
+    print(f"  builder --revise {result['name']}")
     return 0
 
 

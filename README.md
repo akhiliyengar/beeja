@@ -1,10 +1,10 @@
-# beeja
+# builder
 
 > *An artifact that grows artifacts. A graph that wires itself.*
 
 An interview-driven artifact builder for self-improving agent systems.
 
-Most agent frameworks start by asking you to *design* a swarm — pick a framework, wire workflows, choose tools. beeja inverts that: it gives you *one* artifact (the builder), three classification axes (shape × specification × phase), and a five-template alphabet. You answer three questions; it produces a draft. You edit; it integrates. The system grows from there.
+Most agent frameworks start by asking you to *design* a swarm — pick a framework, wire workflows, choose tools. builder inverts that: it gives you *one* artifact (the builder), three classification axes (shape × specification × phase), and a five-template alphabet. You answer three questions; it produces a draft. You edit; it integrates. The system grows from there.
 
 ## How it works
 
@@ -41,12 +41,12 @@ The combination dissolves the analysis-paralysis problem at the source: you no l
 - **No upfront design.** Add artifacts one at a time; the DAG emerges from declared I/O.
 - **No silent rot.** The property floor catches schema, cost, and determinism failures from day one, even on artifacts where "good output" is still undefined.
 - **No premature optimization.** Phase-aware scaffolding means an exploration artifact doesn't accumulate eval cases against criteria you haven't decided on yet.
-- **No lock-in.** beeja produces specs; it doesn't replace your substrate. Run them on Anthropic SDK, Copilot CLI, MCP servers, DSPy programs, VS Code agents, or your own runtime.
+- **No lock-in.** builder produces specs; it doesn't replace your substrate. Run them on Anthropic SDK, Copilot CLI, MCP servers, DSPy programs, VS Code agents, or your own runtime.
 
 ## Install
 
 ```bash
-pip install beeja                       # once published
+pip install builder                       # once published
 # or for now:
 git clone https://github.com/akhiliyengar/beeja
 cd beeja
@@ -60,8 +60,8 @@ Then pick an LLM backend:
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 # optional:
-export BEEJA_MODEL=claude-sonnet-4-6
-export BEEJA_SHADOW_ROOT=~/agents/shadow
+export BUILDER_MODEL=claude-sonnet-4-6
+export AGENTS_SHADOW_ROOT=~/agents/shadow
 ```
 
 ### Backend B — VS Code Copilot via the bridge extension
@@ -72,28 +72,28 @@ Uses your existing GitHub Copilot subscription instead of a separate API key.
 # build & install the sibling VS Code extension once
 cd vscode-extension
 npm install && npm run compile
-npx vsce package --no-yarn -o beeja-bridge.vsix
-code --install-extension beeja-bridge.vsix
+npx vsce package --no-yarn -o builder-bridge.vsix
+code --install-extension builder-bridge.vsix
 cd ..
 
 # then in your shell
-export BEEJA_LLM_BACKEND=vscode
-export BEEJA_MODEL=claude-sonnet-4         # or whatever your Copilot plan exposes
+export BUILDER_LLM_BACKEND=vscode
+export BUILDER_MODEL=claude-sonnet-4.6        # or whatever your Copilot plan exposes
 ```
 
-VS Code must be running when you invoke beeja. See `vscode-extension/README.md` for details, model discovery, and troubleshooting.
+VS Code must be running when you invoke builder. See `vscode-extension/README.md` for details, model discovery, and troubleshooting.
 
 ## Use
 
 ```bash
-beeja "I want something that ranks new arxiv papers using my save history"
+builder "I want something that ranks new arxiv papers using my save history"
 ```
 
 The builder will:
 
-1. Run the three-question interview (`beeja/prompts/interview.v2.md`).
+1. Run the three-question interview (`prompts/interview.v2.md`).
 2. Silently classify your intent on three axes: shape, specification, phase.
-3. Hand off to the draft phase (`beeja/prompts/draft.v2.md`) which:
+3. Hand off to the draft phase (`prompts/draft.v2.md`) which:
    - Fills the chosen template.
    - Adds the three-axis `[success]` block.
    - Adds the eight-property `[success.properties]` block.
@@ -105,13 +105,13 @@ The builder will:
 Edit the files, then revise:
 
 ```bash
-beeja --revise arxiv_ranked_today --feedback "tighten the JSON-output rules"
+builder --revise arxiv_ranked_today --feedback "tighten the JSON-output rules"
 ```
 
 ### Programmatic
 
 ```python
-from beeja import interview, draft, revise, write_bundle
+from skill import interview, draft, revise, write_bundle
 
 state = interview("rank arxiv papers", context="...")
 print(state.success.shape, state.success.specification, state.success.phase)
@@ -148,7 +148,7 @@ calibration        = false
 # "urgency=normal" = { shape = "scalar", target = 0.7 }
 ```
 
-See `beeja/prompts/properties.v1.md` for full property semantics.
+See `prompts/properties.v1.md` for full property semantics.
 
 ## Phase-dependent scaffolding
 
@@ -172,47 +172,50 @@ The graduation path: `exploration → calibration → optimization → maintenan
 
 ## Bootstrap sequence
 
-1. Build the **prompt library maintainer** with beeja. Bootstraps the registry layer.
+1. Build the **prompt library maintainer** with builder. Bootstraps the registry layer.
 2. Build the **eval harness gardener** wired to Inspect AI. Bootstraps scoring.
 3. Build the **signal-collector sensor** for one existing artifact. Bootstraps implicit feedback.
 4. Build the **meta-improver**, point it at the prompt library maintainer first.
-5. Use beeja to improve its own interview prompt. **First closed loop.**
+5. Use builder to improve its own interview prompt. **First closed loop.**
 
 ## Repository layout
 
 ```
-beeja/
-├── beeja.toml                  # this builder, as an artifact (with its own [success] block)
+beeja/                            # repo root (named after the GitHub project)
+├── builder.toml                  # this builder, as an artifact (with its own [success] block)
 ├── CHANGELOG.md
 ├── LICENSE
 ├── README.md
 ├── pyproject.toml
-└── beeja/                      # the python package
+├── prompts/
+│   ├── interview.v1.md
+│   ├── interview.v2.md          # ← active
+│   ├── draft.v1.md
+│   ├── draft.v2.md              # ← active
+│   ├── revise.v1.md
+│   ├── revise.v2.md             # ← active
+│   └── properties.v1.md         # the eight universal properties
+├── templates/
+│   ├── sensor.toml              # supports subtype=signal_collector
+│   ├── transform.toml
+│   ├── scorer.toml              # supports subtype=learned_scorer
+│   ├── applier.toml             # idempotence forced ON
+│   └── meta.toml                # monotonicity forced ON
+├── evals/
+│   ├── interview_quality.yaml
+│   └── draft_acceptance.yaml
+└── skill/                        # the python package (installed as `builder`)
     ├── __init__.py
     ├── __main__.py
-    ├── builder.py              # ~280 lines; orchestration only
-    ├── prompts/
-    │   ├── interview.v1.md
-    │   ├── interview.v2.md     # ← active
-    │   ├── draft.v1.md
-    │   ├── draft.v2.md         # ← active
-    │   ├── revise.v1.md
-    │   ├── revise.v2.md        # ← active
-    │   └── properties.v1.md    # the eight universal properties
-    ├── templates/
-    │   ├── sensor.toml         # supports subtype=signal_collector
-    │   ├── transform.toml
-    │   ├── scorer.toml         # supports subtype=learned_scorer
-    │   ├── applier.toml        # idempotence forced ON
-    │   └── meta.toml           # monotonicity forced ON
-    └── evals/
-        ├── interview_quality.yaml
-        └── draft_acceptance.yaml
+    ├── builder.py                # ~280 lines; orchestration only
+    ├── backends.py               # LLM backend abstraction
+    ├── ops.py                    # canonical operations (CLI + MCP both call these)
+    └── mcp_server.py             # stdio JSON-RPC 2.0 wrapper around skill.ops
 ```
 
 ## Status
 
-v0.1 (built on v2 prompts). Interview → draft → revise loop works end-to-end. Property floor is declared; the test runner is on the roadmap (v0.2). No execution spine yet — that's the second artifact beeja helps you build.
+v0.1 (built on v2 prompts). Interview → draft → revise loop works end-to-end. Property floor is declared; the test runner is on the roadmap (v0.2). No execution spine yet — that's the second artifact builder helps you build.
 
 ## Contributing
 
@@ -228,18 +231,18 @@ The hook runs on every `git commit` and enforces:
 
 | Step | Tool | Fix command |
 |---|---|---|
-| Manifest in sync with source | `python -m beeja._manifest --write` | auto-staged |
-| Lint clean | `python -m ruff check beeja tests` | `ruff check --fix beeja tests` |
-| No dead public symbols | `python -m beeja._dead_code` | delete or use the symbol |
+| Manifest in sync with source | `python -m skill._manifest --write` | auto-staged |
+| Lint clean | `python -m ruff check skill tests` | `ruff check --fix skill tests` |
+| No dead public symbols | `python -m skill._dead_code` | delete or use the symbol |
 | Tests pass | `python -m pytest -q` | fix the failure |
 
 CI runs the same four checks on every push and PR, so `--no-verify` will not save you. To skip the hook locally for a WIP commit: `git commit --no-verify`.
 
 ### Where to add code
 
-- **New capability** → add a function to `beeja/ops.py`. The CLI (`beeja --foo`) and MCP tool (`tool_foo`) become thin wrappers. A `tests/test_conformance.py` test asserts both surfaces stay aligned.
-- **Internal helper** → add to `beeja/builder.py` or `beeja/backends.py` and call it from ops. The dead-code scan flags it if nothing references it.
-- **New entry-point flag** → mirror it in `beeja/mcp_server.py` so CLI and MCP capability parity holds.
+- **New capability** → add a function to `skill/ops.py`. The CLI (`builder --foo`) and MCP tool (`tool_foo`) become thin wrappers. A `tests/test_conformance.py` test asserts both surfaces stay aligned.
+- **Internal helper** → add to `skill/builder.py` or `skill/backends.py` and call it from ops. The dead-code scan flags it if nothing references it.
+- **New entry-point flag** → mirror it in `skill/mcp_server.py` so CLI and MCP capability parity holds.
 
 ## Failure modes & escape hatches
 

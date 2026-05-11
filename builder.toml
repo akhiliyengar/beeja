@@ -1,5 +1,5 @@
 [artifact]
-name        = "beeja"
+name        = "builder"
 kind        = "transform"
 version     = "v2"
 status      = "active"
@@ -13,22 +13,22 @@ produces = ["registry.draft_artifact"]
 mode = "invocation"
 
 [prompts]
-interview  = "beeja/prompts/interview.v2.md"
-draft      = "beeja/prompts/draft.v2.md"
-revise     = "beeja/prompts/revise.v2.md"
-properties = "beeja/prompts/properties.v1.md"
+interview  = "builder/prompts/interview.v2.md"
+draft      = "builder/prompts/draft.v2.md"
+revise     = "builder/prompts/revise.v2.md"
+properties = "builder/prompts/properties.v1.md"
 
 [prompts.archive]
-interview_v1 = "beeja/prompts/interview.v1.md"
-draft_v1     = "beeja/prompts/draft.v1.md"
-revise_v1    = "beeja/prompts/revise.v1.md"
+interview_v1 = "builder/prompts/interview.v1.md"
+draft_v1     = "builder/prompts/draft.v1.md"
+revise_v1    = "builder/prompts/revise.v1.md"
 
 [templates]
-sensor    = "beeja/templates/sensor.toml"
-transform = "beeja/templates/transform.toml"
-scorer    = "beeja/templates/scorer.toml"
-applier   = "beeja/templates/applier.toml"
-meta      = "beeja/templates/meta.toml"
+sensor    = "builder/templates/sensor.toml"
+transform = "builder/templates/transform.toml"
+scorer    = "builder/templates/scorer.toml"
+applier   = "builder/templates/applier.toml"
+meta      = "builder/templates/meta.toml"
 
 [function]
 model       = "claude-sonnet-4-6"
@@ -61,8 +61,8 @@ max_dollars  = 0.50
 
 [evals]
 suites = [
-  "beeja/evals/interview_quality.yaml",
-  "beeja/evals/draft_acceptance.yaml",
+  "builder/evals/interview_quality.yaml",
+  "builder/evals/draft_acceptance.yaml",
 ]
 
 [promotion]
@@ -71,4 +71,4 @@ canary_traffic_pct = 100
 
 [lifecycle]
 v1_to_v2 = "Added three-axis [success] block, property floor, phase-dependent scaffolding, signal_collector and learned_scorer subtypes."
-v2_to_release = "Renamed package to beeja; relocated prompts/templates/evals inside the python package so pip-installed wheels carry them as data."
+v2_to_release = "Renamed package to builder; relocated prompts/templates/evals inside the python package so pip-installed wheels carry them as data."

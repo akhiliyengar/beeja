@@ -1,4 +1,4 @@
-"""beeja.ops — canonical operations.
+"""skill.ops — canonical operations.
 
 Every capability (list, read, inspect, revise, build) lives here as a single
 function returning a structured dict. CLI and MCP are thin presentation layers
@@ -16,8 +16,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import beeja.builder as _builder
-from beeja.backends import LLMBackend
+import skill.builder as _builder
+from skill.backends import LLMBackend
 
 # Re-export for type hints within this module
 InterviewState = _builder.InterviewState
