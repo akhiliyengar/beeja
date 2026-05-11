@@ -26,12 +26,12 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint (ruff)
-        run: python -m ruff check builder tests
+        run: python -m ruff check skill tests
 
       - name: Manifest is in sync
         run: |
           python -m skill._manifest --write
-          git diff --exit-code builder/_manifest.json || (echo "FAIL: _manifest.json is stale. Run: python -m skill._manifest --write"; exit 1)
+          git diff --exit-code skill/_manifest.json || (echo "FAIL: _manifest.json is stale. Run: python -m skill._manifest --write"; exit 1)
 
       - name: Dead-code scan
         run: python -m skill._dead_code
