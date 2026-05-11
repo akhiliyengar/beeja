@@ -3,7 +3,7 @@
   "servers": {
     "beeja": {
       "type": "stdio",
-      "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "command": "${command:python.interpreterPath}",
       "args": ["-m", "beeja.mcp_server"],
       "env": {
         "BEEJA_LLM_BACKEND": "vscode",
