@@ -95,9 +95,14 @@ class TestReadShadowArtifact:
 class TestSessionEviction:
     def test_stale_sessions_removed(self, monkeypatch):
         import time
+        from beeja import mcp_server as mcp
         _SESSIONS.clear()
-        _SESSIONS["old"] = {"created": 0.0, "state": None, "system": "", "turns": []}
-        _SESSIONS["new"] = {"created": time.monotonic(), "state": None, "system": "", "turns": []}
+        now = time.monotonic()
+        # "old" must be older than MAX_SESSION_AGE relative to *now*. Using a
+        # literal 0.0 fails on a fresh CI runner where time.monotonic() can be
+        # smaller than MAX_SESSION_AGE (cutoff goes negative).
+        _SESSIONS["old"] = {"created": now - mcp.MAX_SESSION_AGE - 1, "state": None, "system": "", "turns": []}
+        _SESSIONS["new"] = {"created": now, "state": None, "system": "", "turns": []}
         _evict_stale()
         assert "old" not in _SESSIONS
         assert "new" in _SESSIONS

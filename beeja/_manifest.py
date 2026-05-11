@@ -125,9 +125,15 @@ def generate_manifest() -> dict[str, Any]:
 
 
 def write_manifest(path: Path = MANIFEST_PATH) -> Path:
-    """Write the manifest as pretty JSON to *path*."""
+    """Write the manifest as pretty JSON to *path*.
+
+    Uses ``write_bytes`` (not ``write_text``) so the file has stable LF line
+    endings on every platform. Otherwise Windows would write CRLF, and CI's
+    ``git diff --exit-code`` against a Linux-regenerated copy would fail.
+    """
     data = generate_manifest()
-    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    payload = (json.dumps(data, indent=2) + "\n").encode("utf-8")
+    path.write_bytes(payload)
     return path
 
 
