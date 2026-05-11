@@ -1,0 +1,8 @@
+{
+  // Wire the existing post-session-hook so VS Code chat fires it after each
+  // session that touched build_artifact / revise_artifact. The hook script
+  // appends a JSONL record to $AGENTS_SHADOW_ROOT/_signals/builder.jsonl,
+  // which the signal_collector then lifts into deduped signals.
+  "chat.hooks.enabled": true,
+  "chat.hooks.postSession": "powershell -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/integrations/vscode_config/post-session-hook.ps1"
+}

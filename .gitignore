@@ -19,7 +19,7 @@ runs/
 *.log
 
 # editor
-.vscode/settings.json
+# .vscode/settings.json is tracked: it wires chat.hooks.postSession (see AGENTS.md "Hooks").
 .idea/
 *.swp
 .DS_Store
