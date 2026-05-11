@@ -85,67 +85,67 @@
           "name": "interview",
           "signature": "(intent: 'str', context: 'str' = '', interactive: 'bool' = True, backend: 'LLMBackend | None' = None) -> 'InterviewState'",
           "doc": "Run the 3-question interview via stdin/stdout.",
-          "line": 160
+          "line": 179
         },
         {
           "name": "absorb_handoff",
           "signature": "(state: 'InterviewState', handoff: 'dict[str, Any]') -> 'None'",
           "doc": "",
-          "line": 181
+          "line": 200
         },
         {
           "name": "draft",
           "signature": "(state: 'InterviewState', backend: 'LLMBackend | None' = None) -> 'tuple[dict[str, str], list[str]]'",
           "doc": "Produce the artifact bundle. Returns ({path: content}, assumptions).",
-          "line": 206
+          "line": 225
         },
         {
           "name": "revise",
           "signature": "(current: 'dict[str, str]', user_feedback: 'str', backend: 'LLMBackend | None' = None) -> 'tuple[dict[str, str], list[str]]'",
           "doc": "",
-          "line": 240
+          "line": 259
         },
         {
           "name": "extract_json",
           "signature": "(text: 'str') -> 'dict[str, Any] | None'",
           "doc": "",
-          "line": 261
+          "line": 280
         },
         {
           "name": "parse_bundle",
           "signature": "(text: 'str') -> 'tuple[dict[str, str], list[str]]'",
           "doc": "",
-          "line": 271
+          "line": 290
         },
         {
           "name": "bundle_to_text",
           "signature": "(bundle: 'dict[str, str]') -> 'str'",
           "doc": "",
-          "line": 283
+          "line": 302
         },
         {
           "name": "write_bundle",
           "signature": "(bundle: 'dict[str, str]', shadow_name: 'str', root: 'Path | None' = None) -> 'Path'",
           "doc": "",
-          "line": 288
+          "line": 307
         },
         {
           "name": "read_bundle",
           "signature": "(shadow_name: 'str', root: 'Path | None' = None) -> 'dict[str, str]'",
           "doc": "",
-          "line": 303
+          "line": 322
         },
         {
           "name": "derive_name",
           "signature": "(asset: 'str') -> 'str'",
           "doc": "",
-          "line": 319
+          "line": 338
         },
         {
           "name": "main",
           "signature": "() -> 'int'",
           "doc": "",
-          "line": 331
+          "line": 350
         }
       ],
       "classes": [

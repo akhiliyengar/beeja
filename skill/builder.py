@@ -132,12 +132,31 @@ def run_interview(
 ) -> InterviewState:
     """Core interview loop. *get_answer(question)* must return the user's answer
     or raise NeedAnswer to pause (for non-interactive callers)."""
+    pushed_back = False
     while not state.ready and state.questions_asked < MAX_QUESTIONS:
         reply = llm_call(system, state.turns, backend=backend)
         state.turns.append({"role": "assistant", "content": reply})
 
         handoff = extract_json(reply)
         if handoff and handoff.get("ready_for_draft"):
+            # Safety net: if the model jumps straight to handoff before any
+            # question was asked, push back once. Some specs do legitimately
+            # arrive pre-answered, but going to draft on turn 1 with no user
+            # exchange almost always means the model under-interviewed.
+            if state.questions_asked == 0 and not pushed_back:
+                pushed_back = True
+                state.turns.append({
+                    "role": "user",
+                    "content": (
+                        "Hold the handoff. You haven't asked any questions yet. "
+                        "Even if the intent looks self-explanatory, ask Q1 (the "
+                        "trigger) so the user can confirm. Reply with the question "
+                        "only \u2014 no JSON."
+                    ),
+                })
+                # drop the premature handoff turn so it doesn't anchor the model
+                state.turns.pop(-2)
+                continue
             absorb_handoff(state, handoff)
             return state
 
