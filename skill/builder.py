@@ -347,7 +347,26 @@ _derive_name = derive_name
 
 # --- CLI entry point -------------------------------------------------------
 
+def _ensure_utf8_console() -> None:
+    """Force stdout/stderr to UTF-8 so artifact content with non-ASCII (arrows,
+    em-dashes, smart quotes) doesn't crash on legacy Windows code pages
+    (cp1252 / cp437). No-op on platforms where the stream is already UTF-8."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        encoding = (getattr(stream, "encoding", "") or "").lower()
+        if encoding.replace("-", "") == "utf8":
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            # Stream is detached or doesn't support reconfigure; nothing we can do.
+            pass
+
+
 def main() -> int:
+    _ensure_utf8_console()
     p = argparse.ArgumentParser(
         prog="builder",
         description="Interview-driven artifact builder for self-improving agent systems.",
