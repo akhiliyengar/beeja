@@ -15,6 +15,7 @@ The TOML spec now carries a structured `[success]` block with three orthogonal a
 - **No placeholders survive in the final bundle.** No `TODO`, `{{var}}`, `<FILL: ...>`, `FIXME`, `XXX`.
 - **Eval cases must be runnable**, not abstract. If you can't write a runnable case, you don't understand the success criterion well enough — say so in `<assumptions>`.
 - **Default to small.** Shortest viable prompt, smallest budget, fewest dependencies.
+- **Minimal file set.** Emit only the files the artifact actually needs. The required floor is `<name>.toml` + `skill/main.py`. Everything else (`prompts/`, `evals/`, `notes.md`, sibling artifacts) is optional and must justify its presence — see "When to omit a file" below. A single-file-pair artifact is a valid, preferred outcome when the work fits.
 - **Surface every assumption.** Anything inferred-but-unstated goes in `<assumptions>`.
 
 ## Filling the `[success]` block (the v2 heart)
@@ -86,6 +87,21 @@ Sensible defaults per template:
 
 Adjust per the interview's `properties_hint` field — if the user emphasized invariants beyond the defaults, turn those on with appropriate config.
 
+## When to omit a file
+
+Files are not free — each one is something the user must read, maintain, and keep in sync. Emit a file only if the answer to its corresponding question is yes:
+
+| File | Emit when |
+|---|---|
+| `<name>.toml` | always |
+| `skill/main.py` | always |
+| `prompts/main.v1.md` | the artifact actually issues an LLM call. Pure transforms, sensors over structured data, and deterministic scorers don't need a prompt file — inline the (short) instruction string in `main.py` or skip entirely. |
+| `evals/cases.yaml` | `phase != "exploration"` **OR** at least one property in `[success.properties]` is `true` and benefits from a runnable case. If you'd be writing only a placeholder, omit the file and note the gap in `<assumptions>` instead. |
+| `notes.md` | `phase ∈ {exploration, calibration}` **AND** there are concrete graduation criteria or open questions to record. An empty checklist is worse than no file. |
+| sibling `signal_collector` artifact | `specification ∈ {learned, implicit}` **AND** no existing collector watches this asset. |
+
+When a file is omitted, mention it explicitly in `<assumptions>` (e.g. "omitted evals/cases.yaml: exploration phase, no success cases yet"). The user can ask for it in revise.
+
 ## Phase-dependent scaffolding (critical, new in v2)
 
 The phase determines what files the bundle includes:
@@ -150,25 +166,28 @@ If the interview set `subtype = "learned_scorer"`:
 
 ## Output format
 
+Emit only the files the artifact actually needs (see "When to omit a file" above). Always include `<name>.toml` and `skill/main.py`. The other files below are illustrative shapes, not a checklist.
+
 ```
 <bundle>
 <file path="artifacts/<name>/<name>.toml">
 ... filled TOML with [success] block, [success.properties] block, optional [success.context_match] ...
 </file>
 
+<file path="artifacts/<name>/skill/main.py">
+... ~50 lines of orchestration. Load prompt (or inline string), parse input, call LLM (if needed), validate output (including property checks), write asset, log. No heavy frameworks in v1 of a new artifact.
+</file>
+
+<!-- include only if the artifact issues an LLM call: -->
 <file path="artifacts/<name>/prompts/main.v1.md">
 ... the actual runtime prompt ...
 </file>
 
-<file path="artifacts/<name>/skill/main.py">
-... ~50 lines of orchestration. Load prompt, parse input, call LLM, validate output (including property checks), write asset, log. No heavy frameworks in v1 of a new artifact.
-</file>
-
+<!-- include only if there are runnable cases worth writing now: -->
 <file path="artifacts/<name>/evals/cases.yaml">
 suite: <name>
 description: ...
 cases:
-  # property-floor cases (always present):
   - id: schema_validity
     ...
   - id: bounded_cost
@@ -178,19 +197,19 @@ cases:
     ...
 </file>
 
+<!-- include only if there are concrete graduation criteria / open questions: -->
 <file path="artifacts/<name>/notes.md">
 # <name>
 
 Phase: <phase>
 
 ## Graduation criteria
-(only present if phase ∈ {exploration, calibration})
-
 - ...
 
 ## Open questions
 - ...
 </file>
+</bundle>
 
 <assumptions>
 - <each inference and why>
