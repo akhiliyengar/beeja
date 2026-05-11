@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import time
+
 import beeja.builder as builder_mod
+from beeja import mcp_server as mcp
 from beeja.mcp_server import (
     _SESSIONS,
     _evict_stale,
@@ -94,8 +97,6 @@ class TestReadShadowArtifact:
 
 class TestSessionEviction:
     def test_stale_sessions_removed(self, monkeypatch):
-        import time
-        from beeja import mcp_server as mcp
         _SESSIONS.clear()
         now = time.monotonic()
         # "old" must be older than MAX_SESSION_AGE relative to *now*. Using a
