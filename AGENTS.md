@@ -45,6 +45,8 @@ section is the human-authoritative copy.
 - Evals: `evals/` (suite YAMLs).
 - Shadow workspace (artifact builds): `shadow/` (gitignored runtime output).
 - VS Code extension (bridge): `vscode-extension/`.
+- Slash-command prompts: `.github/prompts/` (`/build-artifact`,
+  `/build-artifact-revise`). Workspace-scoped; auto-discovered by Copilot Chat.
 
 ## Environment variables
 
