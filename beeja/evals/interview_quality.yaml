@@ -1,0 +1,170 @@
+suite: interview_quality
+version: v2
+description: >
+  Tests that the interview phase produces correct three-axis classification
+  (shape, specification, phase) and elicits properties when explicit criteria
+  aren't available. Run with `inspect eval evals/interview_quality.yaml`.
+
+cases:
+  # --- v1 carryover cases ------------------------------------------------
+  - id: skip_known_context
+    description: When context already answers a question, don't re-ask.
+    input:
+      intent: "I want something that watches my arxiv saves and ranks new papers."
+      context: |
+        User has been discussing arxiv triage for the past week and mentioned
+        the toroidal aerial platform as their primary project.
+    expects:
+      max_questions: 2
+      template_in: ["sensor", "transform"]
+      output_asset_contains: "arxiv"
+      assumptions_non_empty: true
+
+  - id: three_question_ceiling
+    description: Never ask more than three questions.
+    input:
+      intent: "I need help organizing my project."
+      context: ""
+    expects:
+      max_questions: 3
+      ready_for_draft: true
+
+  - id: no_multi_part_questions
+    description: Each turn contains exactly one question.
+    input:
+      intent: "I want something for code review."
+    expects:
+      max_questions_per_turn: 1
+
+  # --- v2: three-axis classification ------------------------------------
+  - id: shape_binary
+    description: Yes/no judgments classify as binary.
+    input:
+      intent: "Tell me when a new paper cites my 2023 toroidal aerodynamics work."
+    expects:
+      template: "sensor"
+      success_shape: "binary"
+
+  - id: shape_scalar_explicit
+    description: Continuous criterion stated explicitly.
+    input:
+      intent: "Score my arxiv triage agent at 0-1 against my actual click-through."
+    expects:
+      success_shape: "scalar"
+      success_specification: "explicit"
+
+  - id: shape_multi_class
+    description: Named buckets classify as multi_class.
+    input:
+      intent: "Triage my PR review comments into nit / minor / major / critical."
+    expects:
+      success_shape: "multi_class"
+
+  - id: shape_vector
+    description: Multiple competing criteria classify as vector.
+    input:
+      intent: "Improve quality without raising latency or cost."
+    expects:
+      success_shape: "vector"
+      success_specification_not: "explicit"  # vector with no stated weights → property/hybrid
+
+  - id: shape_set
+    description: Coverage criteria classify as set.
+    input:
+      intent: "Make sure every code commit gets a review comment within 5 minutes."
+    expects:
+      success_shape: "set"
+
+  - id: shape_rank
+    description: Order-matters criteria classify as rank.
+    input:
+      intent: "Rank my unread papers so the order matches what I'd pick if I went through them by hand."
+    expects:
+      success_shape: "rank"
+
+  # --- v2: specification mode ------------------------------------------
+  - id: specification_property_only
+    description: User states only invariants → specification is property, not weak explicit.
+    input:
+      intent: "Build something that watches my emails. It must never miss one from my advisor and must not duplicate alerts."
+    expects:
+      success_specification: "property"
+      properties_hint_contains: ["idempotence"]   # "must not duplicate"
+
+  - id: specification_implicit
+    description: User can't articulate success → specification is implicit.
+    input:
+      intent: "I'm experimenting with a thing that summarizes my meeting notes. I'll know it's good when I see it."
+    expects:
+      success_specification_in: ["implicit", "learned"]
+      success_phase: "exploration"
+
+  - id: specification_hybrid_default
+    description: Mix of threshold + properties → hybrid.
+    input:
+      intent: "Score above 0.7, and never produce invalid JSON."
+    expects:
+      success_specification: "hybrid"
+
+  # --- v2: lifecycle phase ---------------------------------------------
+  - id: phase_exploration_for_unknown
+    description: >
+      'I don't know yet' phrasing → phase = exploration.
+    input:
+      intent: "Try summarizing my notes — I'll figure out what good looks like as we go."
+    expects:
+      success_phase: "exploration"
+
+  - id: phase_optimization_when_locked
+    description: Explicit threshold + concrete metric → phase = optimization (or calibration).
+    input:
+      intent: "Already have eval data; just need an agent that scores >0.8 on the existing rubric."
+    expects:
+      success_phase_in: ["optimization", "calibration"]
+
+  - id: phase_default_is_exploration
+    description: Any ambiguity in Q3 → default to exploration (better than premature optimization).
+    input:
+      intent: "Something to help with my arxiv reading."
+    expects:
+      success_phase: "exploration"
+
+  # --- v2: Q3 escape hatch ---------------------------------------------
+  - id: q3_invariant_only
+    description: User answers Q3 with an invariant only → specification = property, no concrete target.
+    input:
+      intent: "Build a code-review agent."
+      simulated_answers:
+        - "git commits"           # Q1
+        - "review comments"       # Q2
+        - "no idea yet — just never tell me a passing test is failing"  # Q3
+    expects:
+      success_specification: "property"
+      success_phase: "exploration"
+      properties_hint_non_empty: true
+
+  # --- v2: context match -----------------------------------------------
+  - id: context_match_detected
+    description: Different bar for different contexts → context_match = true.
+    input:
+      intent: "For urgent emails it must never miss. For others, 90% is fine."
+    expects:
+      context_match: true
+
+  # --- v2: subtypes ----------------------------------------------------
+  - id: subtype_signal_collector
+    description: Implicit-feedback intent → sensor with subtype signal_collector.
+    input:
+      intent: "Watch which papers I actually open after the triage agent ranks them."
+    expects:
+      template: "sensor"
+      subtype: "signal_collector"
+
+  - id: subtype_learned_scorer
+    description: Preference-learning intent → scorer with subtype learned_scorer.
+    input:
+      intent: "Score the triage agent based on which of its ranked papers I keep vs. discard."
+    expects:
+      template: "scorer"
+      subtype: "learned_scorer"
+      success_specification: "learned"

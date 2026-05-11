@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# beeja pre-commit hook: keeps _manifest.json in sync, lints, and runs tests.
+#
+# Install with:
+#   git config core.hooksPath .githooks
+#
+# Skip with:  git commit --no-verify
+
+set -e
+
+# Only regenerate if a tracked source file in beeja/ is staged.
+if git diff --cached --name-only | grep -qE '^beeja/.*\.py$'; then
+    echo "[beeja] regenerating _manifest.json..."
+    python -m beeja._manifest --write
+    git add beeja/_manifest.json
+fi
+
+echo "[beeja] linting (ruff)..."
+python -m ruff check beeja tests
+
+echo "[beeja] scanning for dead code..."
+python -m beeja._dead_code
+
+echo "[beeja] running tests..."
+python -m pytest -q

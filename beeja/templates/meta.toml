@@ -1,0 +1,51 @@
+[artifact]
+name        = "{{name}}"
+kind        = "meta"
+version     = "v1"
+status      = "shadow"
+description = "{{description}}"
+
+[io]
+consumes = ["runs.recent_7d", "evals.scores", "<FILL: additional_inputs_or_remove>"]
+produces = ["registry.proposals.{{target}}"]
+
+[trigger]
+mode     = "schedule"
+schedule = "0 3 * * *"   # daily 3am local
+
+[strategy]
+# method ∈ gepa | textgrad | manual | random_mutation | hybrid
+method        = "{{method}}"
+target        = "{{target}}"
+n_candidates  = 3
+threshold     = 0.05
+# shape_dispatch: optimization method per success shape of the target
+shape_dispatch = { scalar = "gepa", vector = "nsga2", binary = "hill_climb", multi_class = "evolved_voting" }
+
+[success]
+# the meta-improver's own success: do its proposals beat current versions?
+shape         = "scalar"
+specification = "explicit"
+phase         = "calibration"
+description   = "Promoted proposals improve target's eval score by >= threshold within 30d."
+range     = [0.0, 1.0]
+target    = 0.5
+direction = "maximize"
+
+[success.properties]
+schema_validity    = true
+bounded_cost       = true
+determinism        = false   # meta-improvers explore by design
+idempotence        = false
+refusal_symmetry   = false
+monotonicity       = true    # CRITICAL: proposals must not regress
+rephrase_stability = false
+calibration        = false
+
+[budget]
+max_tokens  = 50000
+max_dollars = 2.00
+
+[promotion]
+shadow_period_days = 7
+canary_traffic_pct = 0

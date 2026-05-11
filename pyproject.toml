@@ -1,0 +1,85 @@
+[project]
+name            = "beeja"
+version         = "0.1.0"
+description     = "Interview-driven artifact builder for self-improving agent systems."
+readme          = "README.md"
+license         = "MIT"
+license-files   = ["LICENSE"]
+requires-python = ">=3.11"
+authors         = [{ name = "beeja contributors" }]
+keywords        = [
+    "agents", "llm", "self-improving", "dataflow", "artifact",
+    "mcp", "anthropic", "claude", "agent-framework", "prompt-engineering",
+]
+classifiers     = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies    = [
+    # Anthropic SDK is optional — only needed for the default 'anthropic' backend.
+    # Users on the 'vscode' backend can skip this with `pip install beeja --no-deps`
+    # plus their own resolver, but for simplicity we include it by default.
+    "anthropic>=0.40.0",
+]
+
+[project.optional-dependencies]
+vscode = []   # vscode backend uses only stdlib (urllib); no extra deps
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.4",
+]
+
+[project.urls]
+Homepage   = "https://github.com/akhiliyengar/beeja"
+Repository = "https://github.com/akhiliyengar/beeja"
+Issues     = "https://github.com/akhiliyengar/beeja/issues"
+Changelog  = "https://github.com/akhiliyengar/beeja/blob/main/CHANGELOG.md"
+
+[project.scripts]
+beeja = "beeja.builder:main"
+
+[build-system]
+requires      = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["beeja"]
+
+# Ship prompts, templates, and eval YAMLs as package data so `pip install beeja` works.
+[tool.hatch.build.targets.wheel.force-include]
+"beeja/prompts"   = "beeja/prompts"
+"beeja/templates" = "beeja/templates"
+"beeja/evals"     = "beeja/evals"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "beeja/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "beeja.toml",
+    "pyproject.toml",
+]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP", "B", "SIM", "ARG"]
+ignore = [
+    "E501",   # line-too-long: cosmetic, prompts and tables read fine longer
+    "SIM105", # try/except/pass is clearer than contextlib.suppress for one-liner skips
+    "SIM117", # nested with-statements: explicit is fine in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Pytest fixtures are passed by parameter name; ruff can't see the implicit usage.
+"tests/**" = ["ARG001", "ARG002"]

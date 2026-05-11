@@ -1,0 +1,52 @@
+[artifact]
+name        = "{{name}}"
+kind        = "applier"
+version     = "v1"
+status      = "shadow"
+description = "{{description}}"
+
+[io]
+consumes = ["<FILL: side_effect_description_asset>"]
+produces = ["effects.applied.{{name}}"]
+
+[trigger]
+mode    = "input_change"
+sources = ["<FILL: trigger_source>"]
+
+[application]
+# effect_kind ∈ email | git_commit | git_pr | http_post | filesystem | shell | api_call
+effect_kind     = "{{effect_kind}}"
+# approval_rule ∈ auto | threshold | human
+approval_rule   = "human"
+threshold       = 0.0
+idempotency_key = "input_hash"
+
+[rollback]
+enabled  = true
+strategy = "{{rollback_strategy}}"  # inverse_op | snapshot | none
+
+[success]
+# the applier's success: was the effect applied without error AND verifiable?
+shape         = "binary"
+specification = "hybrid"   # property floor + explicit "no failures, no drift"
+phase         = "exploration"
+description   = "Effect applied successfully and verifiable post-hoc."
+must_be       = true
+
+[success.properties]
+schema_validity    = true
+bounded_cost       = true
+determinism        = true
+idempotence        = true   # CRITICAL for appliers — retry must be safe
+refusal_symmetry   = true   # refuse iff input matches a defined unsafe class
+monotonicity       = false
+rephrase_stability = false
+calibration        = false
+
+[budget]
+max_applications_per_hour = 30
+max_dollars_per_day       = 1.00
+
+[promotion]
+shadow_period_days = 14   # appliers are dangerous; longer canary
+canary_traffic_pct = 0    # never auto-apply on day one

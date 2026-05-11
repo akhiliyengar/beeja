@@ -1,0 +1,85 @@
+[artifact]
+name        = "{{name}}"
+kind        = "scorer"
+subtype     = "{{subtype_or_none}}"   # e.g. "learned_scorer" or omit
+version     = "v1"
+status      = "shadow"
+description = "{{description}}"
+
+[io]
+consumes = ["<FILL: target_artifact_or_asset>"]
+produces = ["evals.scores.{{name}}"]
+
+[trigger]
+mode    = "input_change"
+sources = ["<FILL: trigger_source>"]
+
+[scoring]
+# method ∈ llm_judge | rubric | metric | test_suite | property_check | learned | hybrid
+method        = "{{method}}"
+criteria      = "{{success_criterion_description}}"
+prompt        = "prompts/rubric.v1.md"   # only if method uses an LLM judge
+model_artifact = ""                       # only if method = "learned"; reference to a preference model artifact
+
+[success]
+# the scorer's OWN success criterion (how do we know the scorer is calibrated?)
+shape         = "scalar"
+specification = "property"
+phase         = "calibration"
+description   = "Scorer agrees with held-out human judgments at least {{target}}."
+range     = [0.0, 1.0]
+target    = 0.7
+direction = "maximize"
+
+[success.properties]
+schema_validity    = true
+bounded_cost       = true
+determinism        = true
+idempotence        = false
+refusal_symmetry   = false
+monotonicity       = false
+rephrase_stability = true   # rephrased inputs should score similarly
+calibration        = true   # scorer confidence vs. realized agreement
+
+[output_schema]
+# the schema of the scorer's emitted verdict — shape-dispatched
+# fill ONE block matching the target artifact's success.shape:
+
+# binary:
+# verdict    = "bool"
+# rationale  = "string"
+# confidence = "float in [0, 1]"
+
+# scalar:
+score      = "float in [0, 1]"
+rationale  = "string"
+confidence = "float in [0, 1]"
+flags      = "list[string]"
+
+# multi_class:
+# label      = "string in <target's classes>"
+# rationale  = "string"
+# confidence = "float in [0, 1]"
+
+# vector:
+# dimensions = "map[string -> float]"
+# rationale  = "string"
+
+# set:
+# precision  = "float"
+# recall     = "float"
+# f1         = "float"
+# missed     = "list[id]"
+# extras     = "list[id]"
+
+# rank:
+# spearman   = "float in [-1, 1]"
+# kendall    = "float in [-1, 1]"
+
+[budget]
+max_tokens  = 2000
+max_dollars = 0.02
+
+[promotion]
+shadow_period_days = 3
+canary_traffic_pct = 0

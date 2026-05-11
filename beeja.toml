@@ -1,0 +1,74 @@
+[artifact]
+name        = "beeja"
+kind        = "transform"
+version     = "v2"
+status      = "active"
+description = "Interview-driven artifact builder. Three questions, classification on three axes (shape × specification × phase), produces a draft artifact bundle in a shadow branch."
+
+[io]
+consumes = ["user.conversation", "registry.state", "evals.recent_scores"]
+produces = ["registry.draft_artifact"]
+
+[trigger]
+mode = "invocation"
+
+[prompts]
+interview  = "beeja/prompts/interview.v2.md"
+draft      = "beeja/prompts/draft.v2.md"
+revise     = "beeja/prompts/revise.v2.md"
+properties = "beeja/prompts/properties.v1.md"
+
+[prompts.archive]
+interview_v1 = "beeja/prompts/interview.v1.md"
+draft_v1     = "beeja/prompts/draft.v1.md"
+revise_v1    = "beeja/prompts/revise.v1.md"
+
+[templates]
+sensor    = "beeja/templates/sensor.toml"
+transform = "beeja/templates/transform.toml"
+scorer    = "beeja/templates/scorer.toml"
+applier   = "beeja/templates/applier.toml"
+meta      = "beeja/templates/meta.toml"
+
+[function]
+model       = "claude-sonnet-4-6"
+temperature = 0
+seed        = 42
+
+[success]
+shape         = "vector"
+specification = "hybrid"
+phase         = "calibration"
+description   = "Drafts are accepted by the user with limited revision passes AND the resulting artifacts survive their first 30 days without quarantine."
+dimensions    = ["draft_acceptance_rate", "avg_revision_passes", "artifact_30d_survival_rate"]
+directions    = ["maximize", "minimize", "maximize"]
+composition   = "pareto"
+
+[success.properties]
+schema_validity    = true
+bounded_cost       = true
+determinism        = true
+idempotence        = false
+refusal_symmetry   = false
+monotonicity       = false
+rephrase_stability = true
+calibration        = false
+
+[budget]
+max_tokens   = 30000
+max_wall_sec = 1800
+max_dollars  = 0.50
+
+[evals]
+suites = [
+  "beeja/evals/interview_quality.yaml",
+  "beeja/evals/draft_acceptance.yaml",
+]
+
+[promotion]
+shadow_period_days = 7
+canary_traffic_pct = 100
+
+[lifecycle]
+v1_to_v2 = "Added three-axis [success] block, property floor, phase-dependent scaffolding, signal_collector and learned_scorer subtypes."
+v2_to_release = "Renamed package to beeja; relocated prompts/templates/evals inside the python package so pip-installed wheels carry them as data."

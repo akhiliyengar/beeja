@@ -1,0 +1,313 @@
+{
+  "version": "0.1.0",
+  "modules": [
+    {
+      "module": "beeja.ops",
+      "file": "beeja/ops.py",
+      "doc": "beeja.ops \u2014 canonical operations.",
+      "functions": [
+        {
+          "name": "list_artifacts",
+          "signature": "() -> 'dict[str, Any]'",
+          "doc": "Return all shadow artifacts (excluding underscore-prefixed dirs).",
+          "line": 31
+        },
+        {
+          "name": "read_artifact",
+          "signature": "(name: 'str') -> 'dict[str, Any]'",
+          "doc": "Read every file in a shadow bundle. Raises FileNotFoundError.",
+          "line": 51
+        },
+        {
+          "name": "inspect_registry",
+          "signature": "() -> 'dict[str, Any]'",
+          "doc": "List installed templates, prompts, and evals.",
+          "line": 65
+        },
+        {
+          "name": "revise_artifact",
+          "signature": "(name: 'str', feedback: 'str', backend: 'LLMBackend | None' = None) -> 'dict[str, Any]'",
+          "doc": "Revise an existing shadow bundle. Returns the new bundle metadata.",
+          "line": 81
+        },
+        {
+          "name": "build_artifact",
+          "signature": "(intent: 'str', context: 'str' = '', get_answer: 'Callable[[str], str] | None' = None, backend: 'LLMBackend | None' = None) -> 'dict[str, Any]'",
+          "doc": "Run the full interview \u2192 draft pipeline.",
+          "line": 103
+        }
+      ],
+      "classes": [],
+      "constants": []
+    },
+    {
+      "module": "beeja.builder",
+      "file": "beeja/builder.py",
+      "doc": "beeja \u2014 interview-driven artifact builder.",
+      "functions": [
+        {
+          "name": "shadow_root",
+          "signature": "() -> 'Path'",
+          "doc": "Return the shadow root, reading the env var each time.",
+          "line": 39
+        },
+        {
+          "name": "load_prompt",
+          "signature": "(name: 'str', version: 'str' = 'v2') -> 'str'",
+          "doc": "Load a prompt file. Falls back to v1 if requested version doesn't exist.",
+          "line": 90
+        },
+        {
+          "name": "load_template",
+          "signature": "(kind: 'str') -> 'str'",
+          "doc": "",
+          "line": 98
+        },
+        {
+          "name": "load_properties_reference",
+          "signature": "() -> 'str'",
+          "doc": "",
+          "line": 102
+        },
+        {
+          "name": "llm_call",
+          "signature": "(system: 'str', messages: 'list[dict]', max_tokens: 'int' = 4096, backend: 'LLMBackend | None' = None) -> 'str'",
+          "doc": "",
+          "line": 108
+        },
+        {
+          "name": "run_interview",
+          "signature": "(system: 'str', state: 'InterviewState', get_answer: 'Callable[[str], str]', backend: 'LLMBackend | None' = None) -> 'InterviewState'",
+          "doc": "Core interview loop. *get_answer(question)* must return the user's answer",
+          "line": 122
+        },
+        {
+          "name": "interview",
+          "signature": "(intent: 'str', context: 'str' = '', interactive: 'bool' = True, backend: 'LLMBackend | None' = None) -> 'InterviewState'",
+          "doc": "Run the 3-question interview via stdin/stdout.",
+          "line": 155
+        },
+        {
+          "name": "absorb_handoff",
+          "signature": "(state: 'InterviewState', handoff: 'dict[str, Any]') -> 'None'",
+          "doc": "",
+          "line": 176
+        },
+        {
+          "name": "draft",
+          "signature": "(state: 'InterviewState', backend: 'LLMBackend | None' = None) -> 'tuple[dict[str, str], list[str]]'",
+          "doc": "Produce the artifact bundle. Returns ({path: content}, assumptions).",
+          "line": 201
+        },
+        {
+          "name": "revise",
+          "signature": "(current: 'dict[str, str]', user_feedback: 'str', backend: 'LLMBackend | None' = None) -> 'tuple[dict[str, str], list[str]]'",
+          "doc": "",
+          "line": 235
+        },
+        {
+          "name": "extract_json",
+          "signature": "(text: 'str') -> 'dict[str, Any] | None'",
+          "doc": "",
+          "line": 256
+        },
+        {
+          "name": "parse_bundle",
+          "signature": "(text: 'str') -> 'tuple[dict[str, str], list[str]]'",
+          "doc": "",
+          "line": 266
+        },
+        {
+          "name": "bundle_to_text",
+          "signature": "(bundle: 'dict[str, str]') -> 'str'",
+          "doc": "",
+          "line": 278
+        },
+        {
+          "name": "write_bundle",
+          "signature": "(bundle: 'dict[str, str]', shadow_name: 'str', root: 'Path | None' = None) -> 'Path'",
+          "doc": "",
+          "line": 283
+        },
+        {
+          "name": "read_bundle",
+          "signature": "(shadow_name: 'str', root: 'Path | None' = None) -> 'dict[str, str]'",
+          "doc": "",
+          "line": 298
+        },
+        {
+          "name": "derive_name",
+          "signature": "(asset: 'str') -> 'str'",
+          "doc": "",
+          "line": 314
+        },
+        {
+          "name": "main",
+          "signature": "() -> 'int'",
+          "doc": "",
+          "line": 326
+        }
+      ],
+      "classes": [
+        {
+          "name": "SuccessSpec",
+          "doc": "SuccessSpec(shape: 'Shape | None' = None, specification: 'Specification | None' = None, phase: 'Phase | None' = None, description: 'str' = '', context_match: 'bool' = False)",
+          "line": 65,
+          "methods": [
+            {
+              "name": "__init__",
+              "signature": "(self, shape: 'Shape | None' = None, specification: 'Specification | None' = None, phase: 'Phase | None' = None, description: 'str' = '', context_match: 'bool' = False) -> None",
+              "doc": "Initialize self.  See help(type(self)) for accurate signature."
+            }
+          ]
+        },
+        {
+          "name": "InterviewState",
+          "doc": "InterviewState(questions_asked: 'int' = 0, turns: 'list[dict]' = <factory>, template: 'TemplateKind | None' = None, subtype: 'Subtype' = None, trigger: 'str | None' = None, output_asset: 'str | None' = None, success: 'SuccessSpec' = <factory>, properties_hint: 'list[str]' = <factory>, assumptions: 'list[str]' = <factory>, ready: 'bool' = False)",
+          "line": 74,
+          "methods": [
+            {
+              "name": "__init__",
+              "signature": "(self, questions_asked: 'int' = 0, turns: 'list[dict]' = <factory>, template: 'TemplateKind | None' = None, subtype: 'Subtype' = None, trigger: 'str | None' = None, output_asset: 'str | None' = None, success: 'SuccessSpec' = <factory>, properties_hint: 'list[str]' = <factory>, assumptions: 'list[str]' = <factory>, ready: 'bool' = False) -> None",
+              "doc": "Initialize self.  See help(type(self)) for accurate signature."
+            }
+          ]
+        },
+        {
+          "name": "NeedAnswer",
+          "doc": "Raised by the answer callback when no more answers are available.",
+          "line": 115,
+          "methods": [
+            {
+              "name": "__init__",
+              "signature": "(self, question: 'str', state: 'InterviewState')",
+              "doc": "Initialize self.  See help(type(self)) for accurate signature."
+            }
+          ]
+        }
+      ],
+      "constants": [
+        "MAX_QUESTIONS",
+        "PROMPT_VERSION"
+      ]
+    },
+    {
+      "module": "beeja.backends",
+      "file": "beeja/backends.py",
+      "doc": "LLM backend abstraction.",
+      "functions": [
+        {
+          "name": "get_backend",
+          "signature": "() -> 'LLMBackend'",
+          "doc": "Construct the configured backend. Cached per-process via module-level state.",
+          "line": 135
+        }
+      ],
+      "classes": [
+        {
+          "name": "LLMBackend",
+          "doc": "Minimal backend contract. All backends turn (system, messages) into text.",
+          "line": 27,
+          "methods": [
+            {
+              "name": "call",
+              "signature": "(self, system: 'str', messages: 'list[dict]', max_tokens: 'int') -> 'str'",
+              "doc": ""
+            }
+          ]
+        },
+        {
+          "name": "AnthropicBackend",
+          "doc": "Minimal backend contract. All backends turn (system, messages) into text.",
+          "line": 38,
+          "methods": [
+            {
+              "name": "__init__",
+              "signature": "(self, model: 'str' = 'claude-sonnet-4-6') -> 'None'",
+              "doc": "Initialize self.  See help(type(self)) for accurate signature."
+            },
+            {
+              "name": "call",
+              "signature": "(self, system: 'str', messages: 'list[dict]', max_tokens: 'int') -> 'str'",
+              "doc": ""
+            }
+          ]
+        },
+        {
+          "name": "VSCodeBridgeBackend",
+          "doc": "Talks to a local VS Code extension that exposes vscode.lm over HTTP.",
+          "line": 79,
+          "methods": [
+            {
+              "name": "__init__",
+              "signature": "(self, model: 'str' = 'claude-sonnet-4.6') -> 'None'",
+              "doc": "Initialize self.  See help(type(self)) for accurate signature."
+            },
+            {
+              "name": "call",
+              "signature": "(self, system: 'str', messages: 'list[dict]', max_tokens: 'int') -> 'str'",
+              "doc": ""
+            }
+          ]
+        }
+      ],
+      "constants": [
+        "DEFAULT_BRIDGE_URL"
+      ]
+    },
+    {
+      "module": "beeja.mcp_server",
+      "file": "beeja/mcp_server.py",
+      "doc": "beeja MCP server \u2014 stdio JSON-RPC 2.0 wrapper around beeja.ops.",
+      "functions": [
+        {
+          "name": "tool_build_artifact",
+          "signature": "(intent: 'str' = '', context: 'str' = '', answers: 'list[str] | None' = None, session_id: 'str | None' = None) -> 'dict[str, Any]'",
+          "doc": "",
+          "line": 68
+        },
+        {
+          "name": "tool_revise_artifact",
+          "signature": "(name: 'str', feedback: 'str') -> 'dict[str, Any]'",
+          "doc": "",
+          "line": 130
+        },
+        {
+          "name": "tool_list_shadow_artifacts",
+          "signature": "() -> 'dict[str, Any]'",
+          "doc": "",
+          "line": 136
+        },
+        {
+          "name": "tool_read_shadow_artifact",
+          "signature": "(name: 'str') -> 'dict[str, Any]'",
+          "doc": "",
+          "line": 140
+        },
+        {
+          "name": "tool_inspect_registry",
+          "signature": "() -> 'dict[str, Any]'",
+          "doc": "",
+          "line": 147
+        },
+        {
+          "name": "tool_code_manifest",
+          "signature": "() -> 'dict[str, Any]'",
+          "doc": "Return the static manifest of public functions/classes in this package.",
+          "line": 151
+        },
+        {
+          "name": "main",
+          "signature": "() -> 'int'",
+          "doc": "",
+          "line": 273
+        }
+      ],
+      "classes": [],
+      "constants": [
+        "MAX_QUESTIONS",
+        "MAX_SESSION_AGE"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+[artifact]
+name        = "{{name}}"
+kind        = "transform"
+version     = "v1"
+status      = "shadow"
+description = "{{description}}"
+
+[io]
+consumes = ["<FILL: input_asset_1>", "<FILL: input_asset_N>"]
+produces = ["{{output_asset}}"]
+
+[trigger]
+mode    = "input_change"
+sources = ["<FILL: trigger_source>"]
+
+[function]
+model       = "claude-sonnet-4-6"
+prompt      = "prompts/main.v1.md"
+temperature = 0
+seed        = 42
+
+[success]
+shape         = "scalar"
+specification = "explicit"
+phase         = "exploration"
+description   = "{{description}}"
+# shape=scalar fields:
+range     = [0.0, 1.0]
+target    = 0.7
+direction = "maximize"
+
+[success.properties]
+schema_validity    = true
+bounded_cost       = true
+determinism        = true       # because temperature=0
+idempotence        = false
+refusal_symmetry   = false
+monotonicity       = false
+rephrase_stability = false
+calibration        = false
+
+# [success.context_match]
+# "context_a" = { shape = "binary", must_be = true }
+# "context_b" = { shape = "scalar", target = 0.7 }
+
+[budget]
+max_tokens   = 5000
+max_wall_sec = 120
+max_dollars  = 0.05
+
+[cache]
+enabled  = true
+ttl_days = 30
+
+[evals]
+suites = ["evals/cases.yaml"]
+
+[promotion]
+shadow_period_days = 7
+canary_traffic_pct = 0   # bumped to 5 in calibration, 10 in optimization

@@ -1,0 +1,52 @@
+[artifact]
+name        = "{{name}}"
+kind        = "sensor"
+subtype     = "{{subtype_or_none}}"   # e.g. "signal_collector" or omit
+version     = "v1"
+status      = "shadow"
+description = "{{description}}"
+
+[io]
+emits = ["{{output_asset}}"]
+
+[source]
+# kind ∈ filesystem | http | cron | imap | git | manual | webhook
+kind     = "{{source_kind}}"
+path     = "{{source_path}}"   # for filesystem
+url      = ""                  # for http
+schedule = ""                  # for cron, e.g. "*/15 * * * *"
+
+[emission]
+mode      = "raw"     # raw | parsed | classified
+parser    = ""        # optional skill function ref
+dedupe_by = "hash"
+
+[success]
+shape         = "set"
+specification = "property"
+phase         = "exploration"
+description   = "{{description}}"
+# shape=set fields:
+metric        = "recall"
+target        = 1.0
+
+[success.properties]
+schema_validity    = true
+bounded_cost       = true
+determinism        = true
+idempotence        = true
+refusal_symmetry   = false
+monotonicity       = false
+rephrase_stability = false
+calibration        = false
+
+[budget]
+max_polls_per_hour  = 60
+max_dollars_per_day = 0.10
+
+[evals]
+suites = ["evals/cases.yaml"]
+
+[promotion]
+shadow_period_days = 7
+canary_traffic_pct = 0

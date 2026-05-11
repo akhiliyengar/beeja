@@ -1,0 +1,242 @@
+suite: draft_acceptance
+version: v2
+description: >
+  Tests that the draft phase produces valid, runnable, placeholder-free bundles
+  with the three-axis [success] block, opt-in property floor, and phase-dependent
+  scaffolding. Run with `inspect eval evals/draft_acceptance.yaml`.
+
+cases:
+  # --- v1 carryover -----------------------------------------------------
+  - id: no_placeholders
+    description: Final bundle contains no template placeholders.
+    input:
+      template: "transform"
+      trigger: "git commit on local repo"
+      output_asset: "pr.review_comments"
+      success:
+        shape: "scalar"
+        specification: "explicit"
+        phase: "optimization"
+        description: "reviewer agrees with at least 60% of comments"
+        target: 0.6
+    expects:
+      contains_no:
+        - "TODO"
+        - "{{"
+        - "<FILL:"
+        - "FIXME"
+        - "XXX"
+        - "placeholder"
+
+  - id: toml_parses
+    description: Generated TOML parses cleanly.
+    input:
+      template: "transform"
+      trigger: "new arxiv paper appears"
+      output_asset: "arxiv.ranked_today"
+      success:
+        shape: "scalar"
+        specification: "explicit"
+        phase: "calibration"
+        description: "top 5 ranked papers get clicked within 24h"
+        target: 0.7
+    expects:
+      toml_parses: true
+
+  # --- v2: [success] block structure ------------------------------------
+  - id: success_block_present
+    description: Every artifact has a [success] block with all three axes.
+    input:
+      template: "transform"
+      trigger: "user invokes"
+      output_asset: "summary"
+      success:
+        shape: "scalar"
+        specification: "explicit"
+        phase: "optimization"
+        description: "user keeps it"
+        target: 0.5
+    expects:
+      toml_contains_path: "[success].shape"
+      toml_contains_path: "[success].specification"
+      toml_contains_path: "[success].phase"
+      toml_contains_path: "[success].description"
+
+  - id: shape_fields_match_shape
+    description: shape="vector" produces dimensions/directions/composition fields.
+    input:
+      template: "transform"
+      success:
+        shape: "vector"
+        specification: "hybrid"
+        phase: "calibration"
+        dimensions: ["quality", "cost"]
+        directions: ["maximize", "minimize"]
+        composition: "pareto"
+    expects:
+      toml_contains_path: "[success].dimensions"
+      toml_contains_path: "[success].directions"
+      toml_contains_path: "[success].composition"
+
+  - id: scalar_has_target_and_range
+    description: shape="scalar" produces range, target, direction.
+    input:
+      template: "transform"
+      success:
+        shape: "scalar"
+        target: 0.7
+    expects:
+      toml_contains_path: "[success].range"
+      toml_contains_path: "[success].target"
+      toml_contains_path: "[success].direction"
+
+  - id: multi_class_has_classes
+    description: shape="multi_class" produces classes list and target_class.
+    input:
+      template: "transform"
+      success:
+        shape: "multi_class"
+        classes: ["nit", "minor", "major", "critical"]
+        target_class: "minor"
+    expects:
+      toml_contains_path: "[success].classes"
+      toml_contains_path: "[success].target_class"
+
+  # --- v2: property floor -----------------------------------------------
+  - id: property_floor_present
+    description: All eight universal properties explicitly set (true/false/inline-table).
+    input:
+      template: "transform"
+      success:
+        shape: "scalar"
+        specification: "explicit"
+        phase: "optimization"
+    expects:
+      properties_all_eight_set: true
+      properties_keys:
+        - "schema_validity"
+        - "bounded_cost"
+        - "determinism"
+        - "idempotence"
+        - "refusal_symmetry"
+        - "monotonicity"
+        - "rephrase_stability"
+        - "calibration"
+
+  - id: applier_idempotence_forced_on
+    description: Applier templates must have idempotence = true.
+    input:
+      template: "applier"
+      effect_kind: "git_commit"
+    expects:
+      property_value:
+        idempotence: true
+
+  - id: meta_monotonicity_forced_on
+    description: Meta-improver templates must have monotonicity = true.
+    input:
+      template: "meta"
+      target: "arxiv_ranked_today"
+    expects:
+      property_value:
+        monotonicity: true
+
+  # --- v2: phase-dependent scaffolding ----------------------------------
+  - id: exploration_no_success_evals
+    description: phase=exploration → eval cases test ONLY the property floor.
+    input:
+      template: "transform"
+      success:
+        shape: "scalar"
+        specification: "property"
+        phase: "exploration"
+    expects:
+      eval_cases_only_property: true
+      files_present:
+        - "notes.md"
+      notes_md_contains: "Graduation criteria"
+
+  - id: optimization_full_evals
+    description: phase=optimization → full eval suite + meta_compatible=true.
+    input:
+      template: "transform"
+      success:
+        shape: "scalar"
+        specification: "explicit"
+        phase: "optimization"
+        target: 0.7
+    expects:
+      eval_cases_include_success: true
+      meta_compatible: true
+
+  - id: calibration_partial
+    description: phase=calibration → property floor + provisional success cases.
+    input:
+      template: "transform"
+      success:
+        shape: "scalar"
+        specification: "hybrid"
+        phase: "calibration"
+        target: 0.6
+    expects:
+      eval_cases_include_property: true
+      eval_cases_include_provisional_success: true
+      canary_traffic_pct: 5
+
+  - id: exploration_canary_zero
+    description: phase=exploration → canary_traffic_pct = 0 (nothing promotes).
+    input:
+      template: "transform"
+      success:
+        phase: "exploration"
+    expects:
+      canary_traffic_pct: 0
+
+  # --- v2: signal_collector subtype -------------------------------------
+  - id: signal_collector_sensor
+    description: subtype=signal_collector produces a sensor emitting signals.* asset.
+    input:
+      template: "sensor"
+      subtype: "signal_collector"
+      output_asset: "signals.arxiv_ranked_today"
+      target: "arxiv_ranked_today"
+    expects:
+      toml_contains_path: "[artifact].subtype"
+      output_asset_starts_with: "signals."
+
+  # --- v2: learned_scorer subtype ---------------------------------------
+  - id: learned_scorer_references_model
+    description: subtype=learned_scorer references a preference model artifact.
+    input:
+      template: "scorer"
+      subtype: "learned_scorer"
+    expects:
+      toml_contains_path: "[scoring].model_artifact"
+      toml_field_value:
+        "[scoring].method": "learned"
+
+  # --- v2: context_match -----------------------------------------------
+  - id: context_match_scaffold
+    description: context_match=true produces a [success.context_match] table with ≥2 entries.
+    input:
+      template: "transform"
+      success:
+        shape: "scalar"
+        context_match: true
+    expects:
+      toml_contains_path: "[success.context_match]"
+      context_match_entries_min: 2
+
+  # --- v2: assumptions still surfaced -----------------------------------
+  - id: assumptions_surfaced
+    description: Inferred-but-unstated facts appear in <assumptions>.
+    input:
+      template: "transform"
+      success:
+        shape: "scalar"
+        specification: "explicit"
+        phase: "optimization"
+        description: "user finds it useful"
+    expects:
+      assumptions_block_present: true
+      assumptions_non_empty: true  # "useful" forces inference

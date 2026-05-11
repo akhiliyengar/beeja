@@ -1,0 +1,13 @@
+{
+  "$schema": "https://aka.ms/vscode-mcp-schema",
+  "servers": {
+    "beeja": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "beeja.mcp_server"],
+      "env": {
+        "BEEJA_LLM_BACKEND": "vscode"
+      }
+    }
+  }
+}

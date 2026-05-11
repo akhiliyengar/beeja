@@ -1,0 +1,51 @@
+{
+  "name": "beeja-bridge",
+  "displayName": "beeja bridge",
+  "description": "Exposes vscode.lm (GitHub Copilot models) on localhost so the beeja Python CLI can call them.",
+  "version": "0.1.0",
+  "publisher": "beeja",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/akhiliyengar/beeja" },
+  "engines": { "vscode": "^1.95.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "beeja bridge",
+      "properties": {
+        "beejaBridge.port": {
+          "type": "number",
+          "default": 21847,
+          "description": "Local HTTP port the beeja bridge listens on (127.0.0.1 only)."
+        },
+        "beejaBridge.defaultFamily": {
+          "type": "string",
+          "default": "claude-sonnet-4.6",
+          "description": "Default vscode.lm model family if the request doesn't specify one."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "beejaBridge.showStatus",
+        "title": "beeja bridge: Show status"
+      },
+      {
+        "command": "beejaBridge.restart",
+        "title": "beeja bridge: Restart"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --no-yarn -o beeja-bridge.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.95.0",
+    "typescript": "^5.4.0"
+  }
+}
